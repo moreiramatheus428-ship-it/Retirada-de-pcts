@@ -70,7 +70,7 @@ tr:nth-child(even) td{background:#f8f9fd}
 <script>
 const $=s=>document.querySelector(s);
 const PAL=['#2d3277','#f5b800','#00a650','#e53935','#6c7ae0','#8d6e63'];
-let DATA={"ret": [{"id": "48225897280", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48301056882", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48295760976", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48294771792", "resp": "Phelipe", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48307790123", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48297250802", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48300544411", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48304090996", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48293770700", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48300700278", "resp": "Phelipe", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48301316690", "resp": "Phelipe", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48290799970", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48302843992", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48299009721", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48304098187", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48293788126", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48284723435", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48303759428", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48299595404", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48301262566", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48295014155", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48294034668", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48293692557", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48295636764", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48300745796", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48290595295", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48276279563", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}], "mais": [{"id": "48299982296", "resp": "Ana Beatriz do Carmo Ferreira", "ciclo": "PM"}, {"id": "48297729979", "resp": "Ana Beatriz do Carmo Ferreira", "ciclo": "PM"}, {"id": "48240920748", "resp": "Jessica Silva", "ciclo": "PM"}, {"id": "48295416736", "resp": "Ana Beatriz do Carmo Ferreira", "ciclo": "PM"}, {"id": "48307216612", "resp": "Caroline da Silva Souza", "ciclo": "PM"}]}, SRC='dados embutidos', charts={};
+let DATA={ret:[],mais:[]}, SRC='nenhuma planilha carregada', charts={};
 
 /* ---------- utilidades ---------- */
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -125,7 +125,7 @@ function render(){
   const n=(a,c)=>a.filter(x=>x.ciclo===c).length, t=R[0]||['-',0];
   $('#k1').textContent=v.ret.length;$('#k2').textContent=v.mais.length;$('#k3').textContent=v.ret.length-v.mais.length;
   $('#k4').textContent=t[0];$('#k4s').textContent=v.ret.length?`${t[1]} pacotes (${Math.round(t[1]/v.ret.length*100)}% dos retirados)`:'';
-  $('#msg').textContent='Fonte dos dados: '+SRC;
+  $('#msg').textContent=(v.ret.length+v.mais.length)?'Fonte dos dados: '+SRC:'Nenhuma planilha carregada: dados zerados. Clique em "Carregar planilha" ou adicione um dados.xlsx ao repositório.';
   mk('c1',{type:'doughnut',data:{labels:R.map(x=>`${x[0]} (${x[1]})`),datasets:[{data:R.map(x=>x[1]),backgroundColor:PAL}]},options:{plugins:{legend:{position:'right'}}}});
   mk('c2',hbar(M,PAL[1]));
   mk('c3',hbar(L,PAL[2]));
@@ -195,7 +195,7 @@ function gerarPDF(){
 $('#fc').onchange=render;$('#q').oninput=tabelas;$('#pdf').onclick=gerarPDF;
 $('#file').onchange=e=>{const f=e.target.files[0];if(f)f.arrayBuffer().then(b=>load(b,f.name))};
 (async()=>{
-  setData(DATA,SRC); // mostra os dados embutidos imediatamente
+  setData(DATA,SRC); // começa zerado até haver planilha
   try{const r=await fetch('dados.xlsx',{cache:'no-store'});if(r.ok)load(await r.arrayBuffer(),'dados.xlsx')}catch(e){}
 })();
 </script>
