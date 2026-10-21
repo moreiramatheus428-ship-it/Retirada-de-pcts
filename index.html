@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dashboard - PCTS Retirados e à Mais</title>
+<style>
+:root{--bg:#f4f5fa;--card:#fff;--ink:#1d2033;--mut:#6b7090;--pri:#2d3277;--acc:#ffe600;--line:#e4e6f0}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--pri);color:#fff;padding:18px 24px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;border-bottom:4px solid var(--acc)}
+h1{margin:0;font-size:1.35rem}
+header small{opacity:.8;display:block;margin-top:2px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn,select,input[type=search]{font:inherit;font-size:.9rem;border-radius:8px;border:1px solid var(--line);padding:8px 12px;background:#fff;color:var(--ink)}
+.btn{cursor:pointer;font-weight:600}
+.btn.p{background:var(--acc);border-color:var(--acc);color:#1d2033}
+.btn:hover{filter:brightness(.95)}
+main{max-width:1200px;margin:0 auto;padding:20px 16px 40px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.kpi span{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.kpi b{display:block;font-size:2rem;margin-top:4px;color:var(--pri)}
+.kpi i{font-style:normal;font-size:.85rem;color:var(--mut)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(380px,1fr));gap:14px;margin-bottom:16px}
+.card h2{margin:0 0 10px;font-size:1rem}
+.ch{position:relative;height:260px}
+.tw{max-height:360px;overflow:auto}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th{position:sticky;top:0;background:var(--pri);color:#fff;text-align:left;padding:8px}
+td{padding:7px 8px;border-bottom:1px solid var(--line)}
+tr:nth-child(even) td{background:#f8f9fd}
+#msg{font-size:.8rem;color:var(--mut);margin:0 0 12px}
+@media(max-width:480px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>PCTS Retirados e à Mais</h1><small>Dashboard operacional</small></div>
+  <div class="bar">
+    <select id="fc" title="Filtrar por ciclo"></select>
+    <label class="btn">Carregar planilha<input type="file" id="file" accept=".xlsx,.xls" hidden></label>
+    <button class="btn p" id="pdf">Baixar relatório PDF</button>
+  </div>
+</header>
+<main>
+  <p id="msg"></p>
+  <section class="kpis">
+    <div class="card kpi"><span>Pacotes retirados</span><b id="k1">0</b><i>Não couberam / retirados</i></div>
+    <div class="card kpi"><span>Pacotes à mais</span><b id="k2">0</b><i>Identificados pela LOG</i></div>
+    <div class="card kpi"><span>Retirados − à mais</span><b id="k3">0</b><i>Diferença líquida</i></div>
+    <div class="card kpi"><span>Maior responsável</span><b id="k4" style="font-size:1.4rem;margin-top:10px">-</b><i id="k4s"></i></div>
+  </section>
+  <section class="grid">
+    <div class="card"><h2>Retirados por responsável (MELI)</h2><div class="ch"><canvas id="c1"></canvas></div></div>
+    <div class="card"><h2>Retirados por motivo</h2><div class="ch"><canvas id="c2"></canvas></div></div>
+    <div class="card"><h2>À mais por responsável (LOG)</h2><div class="ch"><canvas id="c3"></canvas></div></div>
+    <div class="card"><h2>Retirados × à mais por ciclo</h2><div class="ch"><canvas id="c4"></canvas></div></div>
+  </section>
+  <div class="card" style="margin-bottom:14px"><input type="search" id="q" placeholder="Buscar por ID ou responsável..." style="width:100%"></div>
+  <section class="grid">
+    <div class="card"><h2>Detalhe - Retirados</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável</th><th>Motivo</th><th>Ciclo</th></tr></thead><tbody id="t1"></tbody></table></div></div>
+    <div class="card"><h2>Detalhe - À mais</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável LOG</th><th>Ciclo</th></tr></thead><tbody id="t2"></tbody></table></div></div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const PAL=['#2d3277','#f5b800','#00a650','#e53935','#6c7ae0','#8d6e63'];
+let DATA={"ret": [{"id": "48225897280", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48301056882", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48295760976", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48294771792", "resp": "Phelipe", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48307790123", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48297250802", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48300544411", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48304090996", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48293770700", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48300700278", "resp": "Phelipe", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48301316690", "resp": "Phelipe", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48290799970", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48302843992", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48299009721", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48304098187", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48293788126", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48284723435", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48303759428", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48299595404", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48301262566", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48295014155", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48294034668", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48293692557", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48295636764", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48300745796", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48290595295", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}, {"id": "48276279563", "resp": "Andrew", "ciclo": "PM", "motivo": "Não cabe no veiculo"}], "mais": [{"id": "48299982296", "resp": "Ana Beatriz do Carmo Ferreira", "ciclo": "PM"}, {"id": "48297729979", "resp": "Ana Beatriz do Carmo Ferreira", "ciclo": "PM"}, {"id": "48240920748", "resp": "Jessica Silva", "ciclo": "PM"}, {"id": "48295416736", "resp": "Ana Beatriz do Carmo Ferreira", "ciclo": "PM"}, {"id": "48307216612", "resp": "Caroline da Silva Souza", "ciclo": "PM"}]}, SRC='dados embutidos', charts={};
+
+/* ---------- utilidades ---------- */
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
+const nome=s=>{s=String(s||'').trim().toLowerCase().replace(/\s+/g,' ');return s?s.split(' ').map(w=>['da','de','do','das','dos','e'].includes(w)?w:cap(w)).join(' '):'Não informado'};
+const cnt=(a,k)=>Object.entries(a.reduce((m,x)=>(m[x[k]]=(m[x[k]]||0)+1,m),{})).sort((x,y)=>y[1]-x[1]);
+
+/* ---------- leitura da planilha ---------- */
+function parse(rows){
+  const hi=rows.findIndex(r=>r.some(c=>String(c).trim().toUpperCase()==='IDS'));
+  if(hi<0) throw new Error('cabeçalho "IDS" não encontrado');
+  const h=rows[hi].map(c=>String(c).trim().toUpperCase());
+  const st=h.map((v,i)=>v==='IDS'?i:-1).filter(i=>i>=0);
+  const blk=st.map((s,k)=>{const e=st[k+1]??h.length;const f=re=>{for(let i=s;i<e;i++)if(re.test(h[i]))return i;return -1};return{id:s,resp:f(/RESPONS/),mot:f(/MOTIVO/),cic:f(/CICLO/)}});
+  const get=(b,mot)=>{const o=[];if(!b)return o;for(const r of rows.slice(hi+1)){
+    const m=String(r[b.id]??'').match(/\d{8,}/);if(!m)continue;
+    const x={id:m[0],resp:nome(r[b.resp]),ciclo:String(r[b.cic]??'').trim().toUpperCase()||'Sem ciclo'};
+    if(mot)x.motivo=cap(String(r[b.mot]??'').trim())||'Não informado';o.push(x)}return o};
+  return{ret:get(blk[0],true),mais:get(blk[1],false)};
+}
+function load(buf,name){
+  try{const wb=XLSX.read(buf,{type:'array'});
+    setData(parse(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''})),name)}
+  catch(e){alert('Não consegui ler a planilha: '+e.message)}
+}
+function setData(d,src){
+  DATA=d;SRC=src;
+  const cs=[...new Set([...d.ret,...d.mais].map(x=>x.ciclo))].sort();
+  $('#fc').innerHTML='<option value="">Todos os ciclos</option>'+cs.map(c=>`<option>${esc(c)}</option>`).join('');
+  render();
+}
+const view=()=>{const c=$('#fc').value,f=a=>c?a.filter(x=>x.ciclo===c):a;return{ret:f(DATA.ret),mais:f(DATA.mais),c}};
+
+/* ---------- gráficos ---------- */
+Chart.defaults.font.family='system-ui,-apple-system,"Segoe UI",Arial,sans-serif';
+Chart.register({id:'vl',afterDatasetsDraw(ch){
+  if(ch.config.type!=='bar')return;const c=ch.ctx,hz=ch.options.indexAxis==='y';
+  c.save();c.fillStyle='#1d2033';c.font='600 12px system-ui,Arial';c.textBaseline='middle';c.textAlign=hz?'left':'center';
+  ch.data.datasets.forEach((d,i)=>ch.getDatasetMeta(i).data.forEach((b,j)=>{const v=d.data[j];if(v)c.fillText(v,hz?b.x+6:b.x,hz?b.y:b.y-10)}));
+  c.restore()}});
+function mk(id,cfg){
+  if(charts[id])charts[id].destroy();
+  cfg.options={responsive:true,maintainAspectRatio:false,...cfg.options};
+  charts[id]=new Chart($('#'+id),cfg);
+}
+const hbar=(e,col)=>({type:'bar',data:{labels:e.map(x=>x[0]),datasets:[{data:e.map(x=>x[1]),backgroundColor:col,borderRadius:4}]},
+  options:{indexAxis:'y',plugins:{legend:{display:false}},layout:{padding:{right:28}},scales:{x:{beginAtZero:true,ticks:{precision:0}}}}});
+
+function render(){
+  const v=view(),R=cnt(v.ret,'resp'),M=cnt(v.ret,'motivo'),L=cnt(v.mais,'resp');
+  const cic=[...new Set([...v.ret,...v.mais].map(x=>x.ciclo))].sort();
+  const n=(a,c)=>a.filter(x=>x.ciclo===c).length, t=R[0]||['-',0];
+  $('#k1').textContent=v.ret.length;$('#k2').textContent=v.mais.length;$('#k3').textContent=v.ret.length-v.mais.length;
+  $('#k4').textContent=t[0];$('#k4s').textContent=v.ret.length?`${t[1]} pacotes (${Math.round(t[1]/v.ret.length*100)}% dos retirados)`:'';
+  $('#msg').textContent='Fonte dos dados: '+SRC;
+  mk('c1',{type:'doughnut',data:{labels:R.map(x=>`${x[0]} (${x[1]})`),datasets:[{data:R.map(x=>x[1]),backgroundColor:PAL}]},options:{plugins:{legend:{position:'right'}}}});
+  mk('c2',hbar(M,PAL[1]));
+  mk('c3',hbar(L,PAL[2]));
+  mk('c4',{type:'bar',data:{labels:cic,datasets:[{label:'Retirados',data:cic.map(c=>n(v.ret,c)),backgroundColor:PAL[0],borderRadius:4},{label:'À mais',data:cic.map(c=>n(v.mais,c)),backgroundColor:PAL[1],borderRadius:4}]},
+    options:{plugins:{legend:{position:'bottom'}},layout:{padding:{top:18}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+  tabelas();
+}
+function tabelas(){
+  const q=$('#q').value.toLowerCase(),v=view(),f=a=>a.filter(x=>(x.id+' '+x.resp).toLowerCase().includes(q));
+  $('#t1').innerHTML=f(v.ret).map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.motivo)}</td><td>${esc(x.ciclo)}</td></tr>`).join('')||'<tr><td colspan="4">Nenhum registro</td></tr>';
+  $('#t2').innerHTML=f(v.mais).map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.ciclo)}</td></tr>`).join('')||'<tr><td colspan="3">Nenhum registro</td></tr>';
+}
+
+/* ---------- relatório PDF ---------- */
+function tbl(d,y,ttl,head,rows,w){
+  const M=14,hdr=()=>{d.setFillColor(45,50,119);d.rect(M,y,182,7,'F');d.setTextColor(255);d.setFont('helvetica','bold');d.setFontSize(9);
+    let x=M+2;head.forEach((t,i)=>{d.text(t,x,y+4.8);x+=w[i]});y+=7;d.setFont('helvetica','normal');d.setTextColor(30)};
+  if(y>260){d.addPage();y=18}
+  d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(45,50,119);d.text(ttl,M,y);y+=4;hdr();
+  if(!rows.length){d.text('Nenhum registro',M+2,y+4.5);return y+12}
+  rows.forEach((r,j)=>{
+    if(y>282){d.addPage();y=18;hdr()}
+    if(j%2){d.setFillColor(244,245,250);d.rect(M,y,182,6,'F')}
+    let x=M+2;r.forEach((c,i)=>{d.text(String(c),x,y+4.2);x+=w[i]});y+=6});
+  return y+10;
+}
+function gerarPDF(){
+  const {jsPDF}=window.jspdf,d=new jsPDF({unit:'mm',format:'a4'}),W=210,M=14,v=view();
+  const R=cnt(v.ret,'resp'),Mo=cnt(v.ret,'motivo'),L=cnt(v.mais,'resp');
+  // cabeçalho
+  d.setFillColor(45,50,119);d.rect(0,0,W,30,'F');d.setFillColor(255,230,0);d.rect(0,30,W,1.6,'F');
+  d.setTextColor(255);d.setFont('helvetica','bold');d.setFontSize(18);d.text('Relatório de PCTS Retirados e à Mais',M,14);
+  d.setFont('helvetica','normal');d.setFontSize(10);
+  d.text('Gerado em '+new Date().toLocaleString('pt-BR')+'  |  Ciclo: '+(v.c||'Todos'),M,22);
+  // KPIs
+  const k=[['Retirados',v.ret.length],['À mais',v.mais.length],['Retirados - à mais',v.ret.length-v.mais.length],['Maior responsável',(R[0]||['-'])[0]]];
+  const kw=(W-2*M-9)/4;
+  k.forEach((x,i)=>{const X=M+i*(kw+3);d.setFillColor(244,245,250);d.roundedRect(X,38,kw,20,2,2,'F');
+    d.setTextColor(107,112,144);d.setFontSize(8);d.text(x[0].toUpperCase(),X+3,44);
+    d.setTextColor(45,50,119);d.setFont('helvetica','bold');d.setFontSize(i==3?11:18);d.text(String(x[1]),X+3,53);d.setFont('helvetica','normal')});
+  // gráficos 2x2
+  let y=66;const cw=(W-2*M-6)/2;
+  [['c1','Retirados por responsável (MELI)'],['c2','Retirados por motivo'],['c3','À mais por responsável (LOG)'],['c4','Retirados x à mais por ciclo']].forEach((g,i)=>{
+    const cv=$('#'+g[0]),h=cw*cv.height/cv.width,X=M+(i%2)*(cw+6);
+    d.setTextColor(30);d.setFont('helvetica','bold');d.setFontSize(10);d.text(g[1],X,y);
+    d.setDrawColor(228,230,240);d.roundedRect(X,y+2,cw,h+2,2,2,'S');
+    d.addImage(cv.toDataURL('image/png',1),'PNG',X+1,y+3,cw-2,h);
+    if(i%2){y+=Math.max(h,cw*$('#'+['c1','c2','c3','c4'][i-1]).height/$('#'+['c1','c2','c3','c4'][i-1]).width)+12}});
+  // destaques
+  const p=(a,t)=>t?Math.round(a/t*100):0,T=R[0]||['-',0],Mt=Mo[0]||['-',0],Lt=L[0]||['-',0];
+  d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(45,50,119);d.text('Destaques',M,y);y+=6;
+  d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(30);
+  [`- ${v.ret.length} pacotes retirados; ${T[0]} respondeu por ${T[1]} (${p(T[1],v.ret.length)}%).`,
+   `- Principal motivo: ${Mt[0]} (${Mt[1]} ocorrências, ${p(Mt[1],v.ret.length)}%).`,
+   `- ${v.mais.length} pacotes à mais; maior incidência LOG: ${Lt[0]} (${Lt[1]}).`].forEach(s=>{d.text(s,M,y);y+=6});
+  // tabelas
+  d.addPage();y=18;
+  y=tbl(d,y,'Pacotes retirados',['ID','Responsável','Motivo','Ciclo'],v.ret.map(x=>[x.id,x.resp,x.motivo,x.ciclo]),[38,40,76,28]);
+  tbl(d,y,'Pacotes à mais',['ID','Responsável LOG','Ciclo'],v.mais.map(x=>[x.id,x.resp,x.ciclo]),[38,106,38]);
+  // rodapé
+  const n=d.getNumberOfPages();
+  for(let i=1;i<=n;i++){d.setPage(i);d.setFontSize(8);d.setTextColor(140);d.text(`Página ${i} de ${n}  |  Fonte: ${SRC}`,M,291)}
+  d.save('relatorio-pcts-'+new Date().toISOString().slice(0,10)+'.pdf');
+}
+
+/* ---------- eventos e início ---------- */
+$('#fc').onchange=render;$('#q').oninput=tabelas;$('#pdf').onclick=gerarPDF;
+$('#file').onchange=e=>{const f=e.target.files[0];if(f)f.arrayBuffer().then(b=>load(b,f.name))};
+(async()=>{
+  setData(DATA,SRC); // mostra os dados embutidos imediatamente
+  try{const r=await fetch('dados.xlsx',{cache:'no-store'});if(r.ok)load(await r.arrayBuffer(),'dados.xlsx')}catch(e){}
+})();
+</script>
+</body>
+</html>
