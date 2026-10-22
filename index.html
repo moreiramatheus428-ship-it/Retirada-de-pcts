@@ -62,6 +62,12 @@ tr:nth-child(even) td{background:#f8f9fd}
     <div class="card"><h2>Detalhe - Retirados</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável</th><th>Motivo</th><th>Ciclo</th></tr></thead><tbody id="t1"></tbody></table></div></div>
     <div class="card"><h2>Detalhe - À mais</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável LOG</th><th>Ciclo</th></tr></thead><tbody id="t2"></tbody></table></div></div>
   </section>
+  <h2 style="margin:22px 0 12px;font-size:1.1rem;color:var(--pri)">Movimentação de pacotes</h2>
+  <section class="kpis" id="kmov"></section>
+  <section class="grid">
+    <div class="card"><h2>Pacotes por movimentação</h2><div class="ch"><canvas id="c5"></canvas></div></div>
+    <div class="card"><h2>Detalhe - Movimentação</h2><div class="tw"><table><thead><tr><th>ID</th><th>Movimentação</th></tr></thead><tbody id="t3"></tbody></table></div></div>
+  </section>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -70,7 +76,7 @@ tr:nth-child(even) td{background:#f8f9fd}
 <script>
 const $=s=>document.querySelector(s);
 const PAL=['#2d3277','#f5b800','#00a650','#e53935','#6c7ae0','#8d6e63'];
-let DATA={ret:[],mais:[]}, SRC='nenhuma planilha carregada', charts={};
+let DATA={ret:[],mais:[],mov:[]}, SRC='nenhuma planilha carregada', charts={};
 
 /* ---------- utilidades ---------- */
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -80,10 +86,10 @@ const cnt=(a,k)=>Object.entries(a.reduce((m,x)=>(m[x[k]]=(m[x[k]]||0)+1,m),{})).
 
 /* ---------- leitura da planilha ---------- */
 function parse(rows){
-  const hi=rows.findIndex(r=>r.some(c=>String(c).trim().toUpperCase()==='IDS'));
+  const hi=rows.findIndex(r=>r.some(c=>/^IDS?$/.test(String(c).trim().toUpperCase())));
   if(hi<0) throw new Error('cabeçalho "IDS" não encontrado');
   const h=rows[hi].map(c=>String(c).trim().toUpperCase());
-  const st=h.map((v,i)=>v==='IDS'?i:-1).filter(i=>i>=0);
+  const st=h.map((v,i)=>/^IDS?$/.test(v)?i:-1).filter(i=>i>=0);
   const blk=st.map((s,k)=>{const e=st[k+1]??h.length;const f=re=>{for(let i=s;i<e;i++)if(re.test(h[i]))return i;return -1};return{id:s,resp:f(/RESPONS/),mot:f(/MOTIVO/),cic:f(/CICLO/)}});
   const get=(b,mot)=>{const o=[];if(!b)return o;for(const r of rows.slice(hi+1)){
     const m=String(r[b.id]??'').match(/\d{8,}/);if(!m)continue;
@@ -91,9 +97,31 @@ function parse(rows){
     if(mot)x.motivo=cap(String(r[b.mot]??'').trim())||'Não informado';o.push(x)}return o};
   return{ret:get(blk[0],true),mais:get(blk[1],false)};
 }
+const MOVS=['Retirado','À mais','Despachar','Faltante'];
+const semAc=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+const movNome=s=>{const k=semAc(s);const f=MOVS.find(m=>semAc(m)===k||(k==='a mais'&&m==='À mais'));return f||(k?cap(String(s).trim()):'Sem movimentação')};
+function parseMov(rows){
+  const hi=rows.findIndex(r=>r.some(c=>/MOVIMENTA/.test(String(c).toUpperCase())));
+  if(hi<0)return[];
+  const h=rows[hi].map(c=>String(c).trim().toUpperCase());
+  const ci=h.findIndex(v=>/^IDS?$/.test(v)),mi=h.findIndex(v=>/MOVIMENTA/.test(v)),di=h.findIndex(v=>/ENTRADA|BRUTA/.test(v));
+  const o=[];
+  for(const r of rows.slice(hi+1)){
+    const m=String(r[ci]??'').match(/\d{8,}/)||(di>=0&&String(r[di]??'').match(/\d{8,}/));
+    if(!m)continue;
+    o.push({id:m[0],mov:movNome(r[mi])});
+  }
+  return o;
+}
 function load(buf,name){
   try{const wb=XLSX.read(buf,{type:'array'});
-    setData(parse(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''})),name)}
+    const rd=n=>XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:''});
+    const nm=wb.SheetNames.find(n=>/MOVIMENTA/.test(n.toUpperCase()));
+    const mov=nm?parseMov(rd(nm)):[];
+    let d;
+    try{d=parse(rd(wb.SheetNames[0]))}catch(e){if(!mov.length)throw e;d={ret:[],mais:[]}}
+    d.mov=mov;
+    setData(d,name)}
   catch(e){alert('Não consegui ler a planilha: '+e.message)}
 }
 function setData(d,src){
@@ -136,7 +164,21 @@ function render(){
 function tabelas(){
   const q=$('#q').value.toLowerCase(),v=view(),f=a=>a.filter(x=>(x.id+' '+x.resp).toLowerCase().includes(q));
   $('#t1').innerHTML=f(v.ret).map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.motivo)}</td><td>${esc(x.ciclo)}</td></tr>`).join('')||'<tr><td colspan="4">Nenhum registro</td></tr>';
+  movimentacao();
   $('#t2').innerHTML=f(v.mais).map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.ciclo)}</td></tr>`).join('')||'<tr><td colspan="3">Nenhum registro</td></tr>';
+}
+
+/* ---------- movimentação de pacotes ---------- */
+const MOVC={'Retirado':PAL[0],'À mais':PAL[1],'Despachar':PAL[2],'Faltante':PAL[3]};
+const movCor=k=>MOVC[k]||PAL[5];
+function movimentacao(){
+  const m=DATA.mov||[],q=$('#q').value.toLowerCase();
+  const ks=[...MOVS,...new Set(m.map(x=>x.mov).filter(k=>!MOVS.includes(k)))];
+  const n=k=>m.filter(x=>x.mov===k).length,p=k=>m.length?Math.round(n(k)/m.length*100):0;
+  $('#kmov').innerHTML=`<div class="card kpi"><span>Total de IDs</span><b>${m.length}</b><i>Aba Movimentação de pacotes</i></div>`+ks.map(k=>`<div class="card kpi"><span>${esc(k)}</span><b style="color:${movCor(k)}">${n(k)}</b><i>${p(k)}% dos IDs</i></div>`).join('');
+  const e=ks.map(k=>[k,n(k)]).filter(x=>x[1]);
+  mk('c5',{type:'doughnut',data:{labels:e.map(x=>`${x[0]} (${x[1]})`),datasets:[{data:e.map(x=>x[1]),backgroundColor:e.map(x=>movCor(x[0]))}]},options:{plugins:{legend:{position:'right'}}}});
+  $('#t3').innerHTML=m.filter(x=>(x.id+' '+x.mov).toLowerCase().includes(q)).map(x=>`<tr><td>${x.id}</td><td><b style="color:${movCor(x.mov)}">${esc(x.mov)}</b></td></tr>`).join('')||'<tr><td colspan="2">Nenhum registro</td></tr>';
 }
 
 /* ---------- relatório PDF ---------- */
