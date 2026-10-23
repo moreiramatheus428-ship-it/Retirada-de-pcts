@@ -68,6 +68,14 @@ tr:nth-child(even) td{background:#f8f9fd}
     <div class="card"><h2>Pacotes por movimentação</h2><div class="ch"><canvas id="c5"></canvas></div></div>
     <div class="card"><h2>Detalhe - Movimentação</h2><div class="tw"><table><thead><tr><th>ID</th><th>Movimentação</th></tr></thead><tbody id="t3"></tbody></table></div></div>
   </section>
+  <h2 style="margin:22px 0 12px;font-size:1.1rem;color:var(--pri)">Transportadora</h2>
+  <section class="kpis" id="ktr"></section>
+  <section class="grid">
+    <div class="card"><h2>Retirados por transportadora</h2><div class="ch"><canvas id="c6"></canvas></div></div>
+    <div class="card"><h2>À mais por transportadora</h2><div class="ch"><canvas id="c7"></canvas></div></div>
+    <div class="card"><h2>Retirados × à mais por transportadora</h2><div class="ch"><canvas id="c8"></canvas></div></div>
+    <div class="card"><h2>Resumo por transportadora</h2><div class="tw"><table><thead><tr><th>Transportadora</th><th>Retirados</th><th>À mais</th><th>Total</th></tr></thead><tbody id="t4"></tbody></table></div></div>
+  </section>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -85,15 +93,17 @@ const nome=s=>{s=String(s||'').trim().toLowerCase().replace(/\s+/g,' ');return s
 const cnt=(a,k)=>Object.entries(a.reduce((m,x)=>(m[x[k]]=(m[x[k]]||0)+1,m),{})).sort((x,y)=>y[1]-x[1]);
 
 /* ---------- leitura da planilha ---------- */
+const NI='Transportadora',TRK=new Map();
+const canonTr=s=>{const t=String(s??'').trim().replace(/\s+/g,' ');if(!t)return NI;const k=t.toLowerCase();if(!TRK.has(k))TRK.set(k,t);return TRK.get(k)};
 function parse(rows){
   const hi=rows.findIndex(r=>r.some(c=>/^IDS?$/.test(String(c).trim().toUpperCase())));
   if(hi<0) throw new Error('cabeçalho "IDS" não encontrado');
   const h=rows[hi].map(c=>String(c).trim().toUpperCase());
   const st=h.map((v,i)=>/^IDS?$/.test(v)?i:-1).filter(i=>i>=0);
-  const blk=st.map((s,k)=>{const e=st[k+1]??h.length;const f=re=>{for(let i=s;i<e;i++)if(re.test(h[i]))return i;return -1};return{id:s,resp:f(/RESPONS/),mot:f(/MOTIVO/),cic:f(/CICLO/)}});
+  const blk=st.map((s,k)=>{const e=st[k+1]??h.length;const f=re=>{for(let i=s;i<e;i++)if(re.test(h[i]))return i;return -1};return{id:s,resp:f(/RESPONS/),mot:f(/MOTIVO/),tr:f(/TRANSPORT/),cic:f(/CICLO/)}});
   const get=(b,mot)=>{const o=[];if(!b)return o;for(const r of rows.slice(hi+1)){
     const m=String(r[b.id]??'').match(/\d{8,}/);if(!m)continue;
-    const x={id:m[0],resp:nome(r[b.resp]),ciclo:String(r[b.cic]??'').trim().toUpperCase()||'Sem ciclo'};
+    const x={id:m[0],resp:nome(r[b.resp]),transp:canonTr(b.tr>=0?r[b.tr]:''),ciclo:String(r[b.cic]??'').trim().toUpperCase()||'Sem ciclo'};
     if(mot)x.motivo=cap(String(r[b.mot]??'').trim())||'Não informado';o.push(x)}return o};
   return{ret:get(blk[0],true),mais:get(blk[1],false)};
 }
@@ -104,12 +114,12 @@ function parseMov(rows){
   const hi=rows.findIndex(r=>r.some(c=>/MOVIMENTA/.test(String(c).toUpperCase())));
   if(hi<0)return[];
   const h=rows[hi].map(c=>String(c).trim().toUpperCase());
-  const ci=h.findIndex(v=>/^IDS?$/.test(v)),mi=h.findIndex(v=>/MOVIMENTA/.test(v)),di=h.findIndex(v=>/ENTRADA|BRUTA/.test(v));
+  const ci=h.findIndex(v=>/^IDS?$/.test(v)),mi=h.findIndex(v=>/MOVIMENTA/.test(v)),di=h.findIndex(v=>/ENTRADA|BRUTA/.test(v)),cc=h.findIndex(v=>/CICLO/.test(v));
   const o=[];
   for(const r of rows.slice(hi+1)){
     const m=String(r[ci]??'').match(/\d{8,}/)||(di>=0&&String(r[di]??'').match(/\d{8,}/));
     if(!m)continue;
-    o.push({id:m[0],mov:movNome(r[mi])});
+    o.push({id:m[0],mov:movNome(r[mi]),ciclo:(cc>=0&&String(r[cc]??'').trim().toUpperCase())||'Sem ciclo'});
   }
   return o;
 }
@@ -126,11 +136,11 @@ function load(buf,name){
 }
 function setData(d,src){
   DATA=d;SRC=src;
-  const cs=[...new Set([...d.ret,...d.mais].map(x=>x.ciclo))].sort();
+  const cs=[...new Set([...d.ret,...d.mais,...(d.mov||[])].map(x=>x.ciclo))].sort();
   $('#fc').innerHTML='<option value="">Todos os ciclos</option>'+cs.map(c=>`<option>${esc(c)}</option>`).join('');
   render();
 }
-const view=()=>{const c=$('#fc').value,f=a=>c?a.filter(x=>x.ciclo===c):a;return{ret:f(DATA.ret),mais:f(DATA.mais),c}};
+const view=()=>{const c=$('#fc').value,f=a=>c?a.filter(x=>x.ciclo===c):a;return{ret:f(DATA.ret),mais:f(DATA.mais),mov:f(DATA.mov||[]),c}};
 
 /* ---------- gráficos ---------- */
 Chart.defaults.font.family='system-ui,-apple-system,"Segoe UI",Arial,sans-serif';
@@ -159,7 +169,7 @@ function render(){
   mk('c3',hbar(L,PAL[2]));
   mk('c4',{type:'bar',data:{labels:cic,datasets:[{label:'Retirados',data:cic.map(c=>n(v.ret,c)),backgroundColor:PAL[0],borderRadius:4},{label:'À mais',data:cic.map(c=>n(v.mais,c)),backgroundColor:PAL[1],borderRadius:4}]},
     options:{plugins:{legend:{position:'bottom'}},layout:{padding:{top:18}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
-  tabelas();
+  tabelas();transportadora();
 }
 function tabelas(){
   const q=$('#q').value.toLowerCase(),v=view(),f=a=>a.filter(x=>(x.id+' '+x.resp).toLowerCase().includes(q));
@@ -172,13 +182,32 @@ function tabelas(){
 const MOVC={'Retirado':PAL[0],'À mais':PAL[1],'Despachar':PAL[2],'Faltante':PAL[3]};
 const movCor=k=>MOVC[k]||PAL[5];
 function movimentacao(){
-  const m=DATA.mov||[],q=$('#q').value.toLowerCase();
+  const m=view().mov,q=$('#q').value.toLowerCase();
   const ks=[...MOVS,...new Set(m.map(x=>x.mov).filter(k=>!MOVS.includes(k)))];
   const n=k=>m.filter(x=>x.mov===k).length,p=k=>m.length?Math.round(n(k)/m.length*100):0;
   $('#kmov').innerHTML=`<div class="card kpi"><span>Total de IDs</span><b>${m.length}</b><i>Aba Movimentação de pacotes</i></div>`+ks.map(k=>`<div class="card kpi"><span>${esc(k)}</span><b style="color:${movCor(k)}">${n(k)}</b><i>${p(k)}% dos IDs</i></div>`).join('');
   const e=ks.map(k=>[k,n(k)]).filter(x=>x[1]);
   mk('c5',{type:'doughnut',data:{labels:e.map(x=>`${x[0]} (${x[1]})`),datasets:[{data:e.map(x=>x[1]),backgroundColor:e.map(x=>movCor(x[0]))}]},options:{plugins:{legend:{position:'right'}}}});
   $('#t3').innerHTML=m.filter(x=>(x.id+' '+x.mov).toLowerCase().includes(q)).map(x=>`<tr><td>${x.id}</td><td><b style="color:${movCor(x.mov)}">${esc(x.mov)}</b></td></tr>`).join('')||'<tr><td colspan="2">Nenhum registro</td></tr>';
+}
+
+/* ---------- transportadora ---------- */
+function transportadora(){
+  const v=view(),R=cnt(v.ret,'transp'),L=cnt(v.mais,'transp');
+  const tot=t=>v.ret.filter(x=>x.transp===t).length+v.mais.filter(x=>x.transp===t).length;
+  const nomes=[...new Set([...v.ret,...v.mais].map(x=>x.transp))].sort((a,b)=>tot(b)-tot(a)||a.localeCompare(b));
+  const ok=nomes;
+  const top=a=>a[0]||['-',0];
+  const tr=top(R),tl=top(L);
+  $('#ktr').innerHTML=`<div class="card kpi"><span>Transportadoras</span><b>${ok.length}</b><i>Com pacotes registrados</i></div>
+    <div class="card kpi"><span>Mais retiradas</span><b style="font-size:1.4rem;margin-top:10px">${esc(tr[0])}</b><i>${tr[1]} pacotes retirados</i></div>
+    <div class="card kpi"><span>Mais à mais</span><b style="font-size:1.4rem;margin-top:10px">${esc(tl[0])}</b><i>${tl[1]} pacotes à mais</i></div>
+`;
+  mk('c6',hbar(R,PAL[0]));
+  mk('c7',hbar(L,PAL[1]));
+  mk('c8',{type:'bar',data:{labels:nomes,datasets:[{label:'Retirados',data:nomes.map(t=>v.ret.filter(x=>x.transp===t).length),backgroundColor:PAL[0],borderRadius:4},{label:'À mais',data:nomes.map(t=>v.mais.filter(x=>x.transp===t).length),backgroundColor:PAL[1],borderRadius:4}]},
+    options:{plugins:{legend:{position:'bottom'}},layout:{padding:{top:18}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+  $('#t4').innerHTML=nomes.map(t=>{const a=v.ret.filter(x=>x.transp===t).length,b=v.mais.filter(x=>x.transp===t).length;return `<tr><td>${esc(t)}</td><td>${a}</td><td>${b}</td><td><b>${a+b}</b></td></tr>`}).join('')||'<tr><td colspan="4">Nenhum registro</td></tr>';
 }
 
 /* ---------- relatório PDF ---------- */
