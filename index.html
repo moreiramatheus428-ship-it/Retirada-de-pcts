@@ -16,6 +16,11 @@ header small{opacity:.8;display:block;margin-top:2px}
 .btn{cursor:pointer;font-weight:600}
 .btn.p{background:var(--acc);border-color:var(--acc);color:#1d2033}
 .btn:hover{filter:brightness(.95)}
+.tabs{display:flex;gap:6px;background:#fff;border-bottom:1px solid var(--line);padding:8px 24px;overflow:auto}
+.tb{font:inherit;font-size:.92rem;font-weight:700;border:0;background:transparent;color:var(--mut);border-radius:8px;padding:9px 16px;cursor:pointer;white-space:nowrap}
+.tb:hover{background:#eef0fa}
+.tb.on{background:var(--pri);color:#fff}
+.pane[hidden]{display:none}
 main{max-width:1200px;margin:0 auto;padding:20px 16px 40px}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
@@ -34,7 +39,7 @@ tr:nth-child(even) td{background:#f8f9fd}
 @media(max-width:480px){.grid{grid-template-columns:1fr}}
 .ov{position:fixed;inset:0;background:rgba(29,32,51,.55);display:flex;align-items:flex-start;justify-content:center;padding:24px 12px;overflow:auto;z-index:50}
 .ov[hidden]{display:none}
-.md{background:var(--card);border-radius:12px;max-width:980px;width:100%;padding:18px;border-top:4px solid var(--acc)}
+.md{background:var(--card);border-radius:12px;max-width:1100px;width:100%;padding:18px;border-top:4px solid var(--acc)}
 .mh{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}
 .mh h2{margin:0;font-size:1.15rem}
 .fg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}
@@ -66,6 +71,7 @@ tr:nth-child(even) td{background:#f8f9fd}
       <button class="btn p" id="mnb" aria-haspopup="true" aria-expanded="false">Menu ▾</button>
       <div class="mnl" id="mnl" hidden>
         <button class="mi" id="bip">Bipar IDs</button>
+        <button class="mi" id="bfa">Bipar faltantes</button>
         <button class="mi" id="pdf">Baixar relatório PDF</button>
         <button class="mi" id="xls">Exportar relatório em Excel</button>
         <label class="mi">Carregar planilha<input type="file" id="file" accept=".xlsx,.xls" hidden></label>
@@ -73,7 +79,12 @@ tr:nth-child(even) td{background:#f8f9fd}
     </div>
   </div>
 </header>
+<nav class="tabs" role="tablist">
+  <button class="tb on" id="tbg" role="tab" aria-selected="true" data-tab="geral">Visão geral</button>
+  <button class="tb" id="tbf" role="tab" aria-selected="false" data-tab="falt">Faltantes (<span id="tbn">0</span>)</button>
+</nav>
 <main>
+ <div class="pane" id="pg">
   <p id="msg"></p>
   <section class="kpis">
     <div class="card kpi"><span>Pacotes retirados</span><b id="k1">0</b><i>Não couberam / retirados</i></div>
@@ -100,13 +111,32 @@ tr:nth-child(even) td{background:#f8f9fd}
     <div class="card"><h2>Retirados × à mais por transportadora</h2><div class="ch"><canvas id="c8"></canvas></div></div>
     <div class="card"><h2>Resumo por transportadora</h2><div class="tw"><table><thead><tr><th>Transportadora</th><th>Retirados</th><th>À mais</th><th>Total</th></tr></thead><tbody id="t4"></tbody></table></div></div>
   </section>
+ </div>
+
+ <div class="pane" id="pf" hidden>
+  <section class="kpis">
+    <div class="card kpi"><span>Pacotes faltantes</span><b id="f1">0</b><i>Bipados como faltante</i></div>
+    <div class="card kpi"><span>Maior responsável LOG</span><b id="f2" style="font-size:1.4rem;margin-top:10px">-</b><i id="f2s"></i></div>
+    <div class="card kpi"><span>Transportadora com mais faltantes</span><b id="f3" style="font-size:1.4rem;margin-top:10px">-</b><i id="f3s"></i></div>
+  </section>
+  <section class="grid">
+    <div class="card"><h2>Faltantes por responsável (LOG)</h2><div class="ch"><canvas id="c9"></canvas></div></div>
+    <div class="card"><h2>Faltantes por transportadora</h2><div class="ch"><canvas id="c10"></canvas></div></div>
+    <div class="card"><h2>Faltantes por ciclo</h2><div class="ch"><canvas id="c11"></canvas></div></div>
+  </section>
+  <div class="card" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px">
+    <input type="search" id="qf" placeholder="Buscar por ID ou responsável LOG..." style="flex:1;min-width:200px">
+    <button class="btn p" id="bfa2">+ Bipar faltantes</button>
+  </div>
+  <div class="card"><h2>Detalhe - Faltantes</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável LOG</th><th>Transportadora</th><th>Ciclo</th><th>Bipado em</th><th></th></tr></thead><tbody id="t5"></tbody></table></div></div>
+ </div>
 </main>
 
 <div class="ov" id="bm" hidden role="dialog" aria-modal="true" aria-labelledby="bmt">
  <div class="md">
   <div class="mh"><h2 id="bmt">Bipar IDs</h2><button class="btn" id="bx">Fechar</button></div>
   <div class="fg">
-   <label>Status<select id="bs"><option>Retirado</option><option>À mais</option></select></label>
+   <label>Status<select id="bs"><option>Retirado</option><option>À mais</option><option>Faltante</option></select></label>
    <label><span id="bl">MELI responsável</span><input type="text" id="br" list="brl" placeholder="Digite o nome" autocomplete="off"></label>
    <label>Ciclo<input type="text" id="bc" list="bcl" placeholder="PM, AM, SD" autocomplete="off"></label>
    <label>Transportadora<input type="text" id="bt" list="btl" placeholder="Nome da transportadora" autocomplete="off"></label>
@@ -118,6 +148,7 @@ tr:nth-child(even) td{background:#f8f9fd}
   <section class="grid pv">
     <div class="card"><h2>Retirados (<span id="bn1">0</span>)</h2><div class="tw"><table><thead><tr><th>ID</th><th>MELI responsável</th><th>Transportadora</th><th>Ciclo</th><th></th></tr></thead><tbody id="bt1"></tbody></table></div></div>
     <div class="card"><h2>À mais (<span id="bn2">0</span>)</h2><div class="tw"><table><thead><tr><th>ID</th><th>LOG responsável</th><th>Transportadora</th><th>Ciclo</th><th></th></tr></thead><tbody id="bt2"></tbody></table></div></div>
+    <div class="card"><h2>Faltantes (<span id="bn3">0</span>)</h2><div class="tw"><table><thead><tr><th>ID</th><th>LOG responsável</th><th>Transportadora</th><th>Ciclo</th><th></th></tr></thead><tbody id="bt3"></tbody></table></div></div>
   </section>
   <div class="mf"><button class="btn" id="bclr">Limpar bipados</button><button class="btn" id="bxl">Exportar relatório em Excel</button><button class="btn p" id="bdone">Concluir</button></div>
  </div>
@@ -184,7 +215,7 @@ function setData(d,src){
   refreshFc();
   render();
 }
-const view=()=>{const c=$('#fc').value,f=a=>c?a.filter(x=>x.ciclo===c):a;const bp=k=>BIP.filter(x=>x.status===k);return{ret:f([...DATA.ret,...bp('Retirado')]),mais:f([...DATA.mais,...bp('À mais')]),mov:f([...DATA.ret.map(x=>({id:x.id,mov:'Retirado',ciclo:x.ciclo})),...DATA.mais.map(x=>({id:x.id,mov:'À mais',ciclo:x.ciclo})),...(DATA.mov||[]).filter(x=>!DATA.ret.some(y=>y.id===x.id)&&!DATA.mais.some(y=>y.id===x.id)),...BIP.map(x=>({id:x.id,mov:x.status,ciclo:x.ciclo}))]),c}};
+const view=()=>{const c=$('#fc').value,f=a=>c?a.filter(x=>x.ciclo===c):a;const bp=k=>BIP.filter(x=>x.status===k);return{ret:f([...DATA.ret,...bp('Retirado')]),mais:f([...DATA.mais,...bp('À mais')]),falt:f(bp('Faltante')),mov:f([...DATA.ret.map(x=>({id:x.id,mov:'Retirado',ciclo:x.ciclo})),...DATA.mais.map(x=>({id:x.id,mov:'À mais',ciclo:x.ciclo})),...(DATA.mov||[]).filter(x=>!DATA.ret.some(y=>y.id===x.id)&&!DATA.mais.some(y=>y.id===x.id)),...BIP.map(x=>({id:x.id,mov:x.status,ciclo:x.ciclo}))]),c}};
 
 /* ---------- gráficos ---------- */
 Chart.defaults.font.family='system-ui,-apple-system,"Segoe UI",Arial,sans-serif';
@@ -207,18 +238,38 @@ function render(){
   const n=(a,c)=>a.filter(x=>x.ciclo===c).length, t=R[0]||['-',0];
   $('#k1').textContent=v.ret.length;$('#k2').textContent=v.mais.length;$('#k3').textContent=v.ret.length-v.mais.length;
   $('#k4').textContent=t[0];$('#k4s').textContent=v.ret.length?`${t[1]} pacotes (${Math.round(t[1]/v.ret.length*100)}% dos retirados)`:'';
-  $('#msg').textContent=(v.ret.length+v.mais.length)?'Fonte dos dados: '+SRC:'Nenhuma planilha carregada: dados zerados. Clique em "Carregar planilha" ou adicione um dados.xlsx ao repositório.';
+  $('#msg').textContent=(v.ret.length+v.mais.length+v.falt.length)?'Fonte dos dados: '+SRC:'Nenhuma planilha carregada: dados zerados. Clique em "Carregar planilha" ou adicione um dados.xlsx ao repositório.';
   mk('c1',{type:'doughnut',data:{labels:R.map(x=>`${x[0]} (${x[1]})`),datasets:[{data:R.map(x=>x[1]),backgroundColor:PAL}]},options:{plugins:{legend:{position:'right'}}}});
   mk('c2',hbar(M,PAL[1]));
   mk('c3',hbar(L,PAL[2]));
   mk('c4',{type:'bar',data:{labels:cic,datasets:[{label:'Retirados',data:cic.map(c=>n(v.ret,c)),backgroundColor:PAL[0],borderRadius:4},{label:'À mais',data:cic.map(c=>n(v.mais,c)),backgroundColor:PAL[1],borderRadius:4}]},
     options:{plugins:{legend:{position:'bottom'}},layout:{padding:{top:18}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
-  tabelas();transportadora();
+  tabelas();transportadora();faltantes();
 }
 function tabelas(){
   const q=$('#q').value.toLowerCase(),v=view(),f=a=>a.filter(x=>(x.id+' '+x.resp).toLowerCase().includes(q));
   $('#t1').innerHTML=f(v.ret).map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.motivo)}</td><td>${esc(x.ciclo)}</td></tr>`).join('')||'<tr><td colspan="4">Nenhum registro</td></tr>';
   $('#t2').innerHTML=f(v.mais).map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.ciclo)}</td></tr>`).join('')||'<tr><td colspan="3">Nenhum registro</td></tr>';
+}
+
+/* ---------- faltantes ---------- */
+const horaFmt=x=>x.at?new Date(x.at).toLocaleString('pt-BR'):'';
+function tabelaFalt(){
+  const q=$('#qf').value.toLowerCase(),v=view();
+  const a=v.falt.filter(x=>(x.id+' '+x.resp).toLowerCase().includes(q)).slice().reverse();
+  $('#t5').innerHTML=a.map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.transp)}</td><td>${esc(x.ciclo)}</td><td>${esc(horaFmt(x))}</td><td><button class="x" data-id="${x.id}" title="Remover" aria-label="Remover ${x.id}">×</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhum faltante bipado</td></tr>';
+}
+function faltantes(){
+  const v=view(),L=cnt(v.falt,'resp'),T=cnt(v.falt,'transp'),C=cnt(v.falt,'ciclo').sort((a,b)=>a[0].localeCompare(b[0]));
+  const tl=L[0]||['-',0],tt=T[0]||['-',0];
+  $('#f1').textContent=v.falt.length;$('#tbn').textContent=v.falt.length;
+  $('#f2').textContent=tl[0];$('#f2s').textContent=v.falt.length?`${tl[1]} faltantes (${Math.round(tl[1]/v.falt.length*100)}%)`:'';
+  $('#f3').textContent=tt[0];$('#f3s').textContent=v.falt.length?`${tt[1]} faltantes`:'';
+  mk('c9',hbar(L,PAL[3]));
+  mk('c10',hbar(T,PAL[0]));
+  mk('c11',{type:'bar',data:{labels:C.map(x=>x[0]),datasets:[{data:C.map(x=>x[1]),backgroundColor:PAL[3],borderRadius:4}]},
+    options:{plugins:{legend:{display:false}},layout:{padding:{top:18}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+  tabelaFalt();
 }
 
 /* ---------- transportadora ---------- */
@@ -276,16 +327,18 @@ function gerarPDF(){
     d.addImage(cv.toDataURL('image/png',1),'PNG',X+1,y+3,cw-2,h);
     if(i%2){y+=Math.max(h,cw*$('#'+['c1','c2','c3','c4'][i-1]).height/$('#'+['c1','c2','c3','c4'][i-1]).width)+12}});
   // destaques
-  const p=(a,t)=>t?Math.round(a/t*100):0,T=R[0]||['-',0],Mt=Mo[0]||['-',0],Lt=L[0]||['-',0];
+  const p=(a,t)=>t?Math.round(a/t*100):0,T=R[0]||['-',0],Mt=Mo[0]||['-',0],Lt=L[0]||['-',0],Ft=cnt(v.falt,'resp')[0]||['-',0];
   d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(45,50,119);d.text('Destaques',M,y);y+=6;
   d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(30);
   [`- ${v.ret.length} pacotes retirados; ${T[0]} respondeu por ${T[1]} (${p(T[1],v.ret.length)}%).`,
    `- Principal motivo: ${Mt[0]} (${Mt[1]} ocorrências, ${p(Mt[1],v.ret.length)}%).`,
-   `- ${v.mais.length} pacotes à mais; maior incidência LOG: ${Lt[0]} (${Lt[1]}).`].forEach(s=>{d.text(s,M,y);y+=6});
+   `- ${v.mais.length} pacotes à mais; maior incidência LOG: ${Lt[0]} (${Lt[1]}).`,
+   `- ${v.falt.length} pacotes faltantes; maior incidência LOG: ${Ft[0]} (${Ft[1]}).`].forEach(s=>{d.text(s,M,y);y+=6});
   // tabelas
   d.addPage();y=18;
   y=tbl(d,y,'Pacotes retirados',['ID','Responsável','Motivo','Ciclo'],v.ret.map(x=>[x.id,x.resp,x.motivo,x.ciclo]),[38,40,76,28]);
-  tbl(d,y,'Pacotes à mais',['ID','Responsável LOG','Ciclo'],v.mais.map(x=>[x.id,x.resp,x.ciclo]),[38,106,38]);
+  y=tbl(d,y,'Pacotes à mais',['ID','Responsável LOG','Ciclo'],v.mais.map(x=>[x.id,x.resp,x.ciclo]),[38,106,38]);
+  tbl(d,y,'Pacotes faltantes',['ID','Responsável LOG','Transportadora','Ciclo'],v.falt.map(x=>[x.id,x.resp,x.transp,x.ciclo]),[38,60,56,28]);
   // rodapé
   const n=d.getNumberOfPages();
   for(let i=1;i<=n;i++){d.setPage(i);d.setFontSize(8);d.setTextColor(140);d.text(`Página ${i} de ${n}  |  Fonte: ${SRC}`,M,291)}
@@ -305,10 +358,10 @@ function refreshFc(){
   if(cs.includes(cur))$('#fc').value=cur;
 }
 function bipLabels(){
-  const r=$('#bs').value==='Retirado';
+  const st=$('#bs').value,r=st==='Retirado';
   $('#bl').textContent=r?'MELI responsável':'LOG responsável';
   $('#bmw').hidden=!r;
-  const src=r?[...DATA.ret,...BIP.filter(x=>x.status==='Retirado')]:[...DATA.mais,...BIP.filter(x=>x.status==='À mais')];
+  const src=r?[...DATA.ret,...BIP.filter(x=>x.status==='Retirado')]:[...(st==='À mais'?DATA.mais:[]),...BIP.filter(x=>x.status===st)];
   const names=[...new Set(src.map(x=>x.resp).filter(n=>n&&n!=='Não informado'))];
   $('#brl').innerHTML=names.map(n=>`<option value="${esc(n)}">`).join('');
   const all=[...baseAll(),...BIP];
@@ -318,11 +371,12 @@ function bipLabels(){
   $('#btl').innerHTML=tr.map(t=>`<option value="${esc(t)}">`).join('');
 }
 function bipLista(){
-  const R=BIP.filter(x=>x.status==='Retirado'),L=BIP.filter(x=>x.status==='À mais');
-  $('#bn1').textContent=R.length;$('#bn2').textContent=L.length;
+  const R=BIP.filter(x=>x.status==='Retirado'),L=BIP.filter(x=>x.status==='À mais'),F=BIP.filter(x=>x.status==='Faltante');
+  $('#bn1').textContent=R.length;$('#bn2').textContent=L.length;$('#bn3').textContent=F.length;
   const row=x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.transp)}</td><td>${esc(x.ciclo)}</td><td><button class="x" data-id="${x.id}" title="Remover" aria-label="Remover ${x.id}">×</button></td></tr>`;
   $('#bt1').innerHTML=R.slice().reverse().map(row).join('')||'<tr><td colspan="5">Nenhum ID bipado</td></tr>';
   $('#bt2').innerHTML=L.slice().reverse().map(row).join('')||'<tr><td colspan="5">Nenhum ID bipado</td></tr>';
+  $('#bt3').innerHTML=F.slice().reverse().map(row).join('')||'<tr><td colspan="5">Nenhum ID bipado</td></tr>';
 }
 function bipAplicar(){saveBip();refreshFc();bipLista();bipLabels();render()}
 function bipMsg(t,c){const m=$('#bmsg');m.textContent=t;m.className=c||''}
@@ -350,12 +404,17 @@ function bipAdd(){
   bipMsg(p.join(' '),dup.length&&!ok?'bad':'ok');
   $('#bid').focus();
 }
-function bipAbrir(){$('#bm').hidden=false;bipLabels();bipLista();bipMsg('');setTimeout(()=>$('#bid').focus(),0)}
+function bipAbrir(s){
+  if(s)$('#bs').value=s;
+  $('#bmt').textContent=$('#bs').value==='Faltante'?'Bipar faltantes':'Bipar IDs';
+  $('#bm').hidden=false;bipLabels();bipLista();bipMsg('');setTimeout(()=>$('#bid').focus(),0)}
 function bipFechar(){$('#bm').hidden=true;$('#mnb').focus()}
 let clrT;
-$('#bip').onclick=bipAbrir;
+$('#bip').onclick=()=>bipAbrir();
+$('#bfa').onclick=()=>bipAbrir('Faltante');
+$('#bfa2').onclick=()=>bipAbrir('Faltante');
 $('#bx').onclick=bipFechar;$('#bdone').onclick=bipFechar;
-$('#bs').onchange=()=>{bipLabels();$('#bid').focus()};
+$('#bs').onchange=()=>{$('#bmt').textContent=$('#bs').value==='Faltante'?'Bipar faltantes':'Bipar IDs';bipLabels();$('#bid').focus()};
 $('#ba').onclick=bipAdd;
 $('#bid').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();bipAdd()}};
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#bm').hidden)bipFechar()});
@@ -363,6 +422,10 @@ $('#bm').addEventListener('click',e=>{
   if(e.target===$('#bm'))bipFechar();
   const id=e.target.dataset&&e.target.dataset.id;
   if(id){BIP=BIP.filter(x=>x.id!==id);bipAplicar();bipMsg('ID '+id+' removido.')}
+});
+$('#t5').addEventListener('click',e=>{
+  const id=e.target.dataset&&e.target.dataset.id;
+  if(id&&confirm('Remover o faltante '+id+'?')){BIP=BIP.filter(x=>x.id!==id);bipAplicar()}
 });
 $('#bclr').onclick=()=>{
   const b=$('#bclr');
@@ -375,20 +438,31 @@ const XHR=['ID','MELI responsável','Motivo','Transportadora','Ciclo','Bipado em
 const XHM=['ID','LOG responsável','Transportadora','Ciclo','Bipado em'];
 function excelRows(){
   const ord=(a,b)=>String(a.ciclo).localeCompare(String(b.ciclo))||String(a.at).localeCompare(String(b.at));
-  const hora=x=>x.at?new Date(x.at).toLocaleString('pt-BR'):'';
+  const hora=horaFmt;
   const ret=BIP.filter(x=>x.status==='Retirado').sort(ord).map(x=>[String(x.id),x.resp||'',x.motivo||'',x.transp||NI,x.ciclo||'',hora(x)]);
   const mais=BIP.filter(x=>x.status==='À mais').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x)]);
-  return{ret,mais};
+  const falt=BIP.filter(x=>x.status==='Faltante').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x)]);
+  return{ret,mais,falt};
 }
 function exportarExcel(){
-  const{ret,mais}=excelRows();
+  const{ret,mais,falt}=excelRows();
   const folha=(h,rows,w)=>{const s=XLSX.utils.aoa_to_sheet([h,...rows]);s['!cols']=w.map(wch=>({wch}));return s};
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,folha(XHR,ret,[16,30,24,22,10,20]),'Retirados');
   XLSX.utils.book_append_sheet(wb,folha(XHM,mais,[16,30,22,10,20]),'À mais');
+  XLSX.utils.book_append_sheet(wb,folha(XHM,falt,[16,30,22,10,20]),'Faltantes');
   XLSX.writeFile(wb,'relatorio-pcts-'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 $('#xls').onclick=exportarExcel;$('#bxl').onclick=exportarExcel;
+
+/* ---------- abas ---------- */
+function abaTrocar(t){
+  const f=t==='falt';
+  $('#pg').hidden=f;$('#pf').hidden=!f;
+  document.querySelectorAll('.tb').forEach(b=>{const on=b.dataset.tab===t;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});
+  Object.values(charts).forEach(c=>{try{c.resize()}catch(e){}});
+}
+document.querySelectorAll('.tb').forEach(b=>b.onclick=()=>abaTrocar(b.dataset.tab));
 
 /* ---------- menu ---------- */
 const abreMenu=a=>{$('#mnl').hidden=!a;$('#mnb').setAttribute('aria-expanded',a?'true':'false')};
@@ -399,7 +473,7 @@ document.addEventListener('click',()=>abreMenu(false));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#mnl').hidden){abreMenu(false);$('#mnb').focus()}});
 
 /* ---------- eventos e início ---------- */
-$('#fc').onchange=render;$('#q').oninput=tabelas;$('#pdf').onclick=()=>{gerarPDF();if(BIP.length)exportarExcel()};
+$('#fc').onchange=render;$('#q').oninput=tabelas;$('#qf').oninput=tabelaFalt;$('#pdf').onclick=()=>{gerarPDF();if(BIP.length)exportarExcel()};
 $('#file').onchange=e=>{const f=e.target.files[0];if(f)f.arrayBuffer().then(b=>load(b,f.name))};
 (async()=>{
   setData(DATA,SRC); // começa zerado até haver planilha
