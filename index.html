@@ -51,6 +51,9 @@ tr:nth-child(even) td{background:#f8f9fd}
 #bmsg{font-size:.85rem;margin:6px 0 12px;min-height:1.2em;color:var(--mut)}
 #bmsg.bad{color:#e53935}
 #bmsg.ok{color:#00864a}
+#smsg{font-size:.85rem;margin:0 0 12px;min-height:1.2em;color:var(--mut)}
+#smsg.bad{color:#e53935}
+#smsg.ok{color:#00864a}
 .pv{margin-bottom:12px}
 .pv .tw{max-height:260px}
 .x{border:0;background:transparent;color:#e53935;font-size:1.1rem;cursor:pointer;line-height:1;padding:2px 6px}
@@ -67,15 +70,13 @@ tr:nth-child(even) td{background:#f8f9fd}
   <div><h1>PCTS Retirados e à Mais</h1><small>Dashboard operacional</small></div>
   <div class="bar">
     <select id="fc" title="Filtrar por ciclo"></select>
+    <button class="btn p" id="bip">Bipar IDs</button>
     <div class="mn">
-      <button class="btn p" id="mnb" aria-haspopup="true" aria-expanded="false">Menu ▾</button>
+      <button class="btn" id="mnb" aria-haspopup="true" aria-expanded="false">Menu ▾</button>
       <div class="mnl" id="mnl" hidden>
-        <button class="mi" id="bip">Bipar IDs</button>
-        <button class="mi" id="bfa">Bipar faltantes</button>
-        <button class="mi" id="bav">Bipar avarias</button>
         <button class="mi" id="pdf">Baixar relatório PDF</button>
         <button class="mi" id="xls">Exportar relatório em Excel</button>
-        <label class="mi">Carregar planilha<input type="file" id="file" accept=".xlsx,.xls" hidden></label>
+        <label class="mi">Carregar planilha<input type="file" id="file" accept=".xlsx,.xls,.csv" hidden></label>
       </div>
     </div>
   </div>
@@ -84,6 +85,8 @@ tr:nth-child(even) td{background:#f8f9fd}
   <button class="tb on" id="tbg" role="tab" aria-selected="true" data-tab="geral">Visão geral</button>
   <button class="tb" id="tbf" role="tab" aria-selected="false" data-tab="falt">Faltantes (<span id="tbn">0</span>)</button>
   <button class="tb" id="tba" role="tab" aria-selected="false" data-tab="avar">Avarias (<span id="tbna">0</span>)</button>
+  <button class="tb" id="tbp" role="tab" aria-selected="false" data-tab="fis">Físico (<span id="tbnp">0</span>)</button>
+  <button class="tb" id="tbs" role="tab" aria-selected="false" data-tab="sist">Sistêmica (<span id="tbns">0</span>)</button>
 </nav>
 <main>
  <div class="pane" id="pg">
@@ -149,6 +152,45 @@ tr:nth-child(even) td{background:#f8f9fd}
   </div>
   <div class="card"><h2>Detalhe - Avarias</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável LOG</th><th>Transportadora</th><th>Ciclo</th><th>Bipado em</th><th></th></tr></thead><tbody id="t6"></tbody></table></div></div>
  </div>
+<div class="pane" id="pfi" hidden>
+  <p id="fmsg" style="font-size:.8rem;color:var(--mut);margin:0 0 12px"></p>
+  <section class="kpis">
+    <div class="card kpi"><span>IDs repetidos</span><b id="p1">0</b><i>Na planilha e nas abas</i></div>
+    <div class="card kpi"><span>Retirados</span><b id="p2">0</b><i>Repetidos como retirado</i></div>
+    <div class="card kpi"><span>À mais</span><b id="p3">0</b><i>Repetidos como à mais</i></div>
+    <div class="card kpi"><span>Avarias</span><b id="p4">0</b><i>Repetidos como avaria</i></div>
+    <div class="card kpi"><span>Faltantes</span><b id="p5">0</b><i>Repetidos como faltante</i></div>
+    <div class="card kpi"><span>Para revisar</span><b id="p6" style="color:#b8860b">0</b><i>Status ≠ estado da planilha</i></div>
+  </section>
+  <section class="grid">
+    <div class="card"><h2>Repetidos por status</h2><div class="ch"><canvas id="c19"></canvas></div></div>
+    <div class="card"><h2>Repetidos por estado na planilha</h2><div class="ch"><canvas id="c20"></canvas></div></div>
+  </section>
+  <div class="card" style="margin-bottom:14px;font-size:.88rem;line-height:1.5"><b>Como ler:</b> o ID está na planilha e também foi bipado. <b style="color:#00864a">Confere</b> = o status bipado é igual ao estado da planilha (ex.: À mais nos dois). <b style="color:#b8860b">Revisar</b> = são diferentes (ex.: bipado como Retirado, mas a planilha diz Correto). A coluna Resultado explica cada caso.</div>
+  <div class="card" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px"><input type="search" id="qp" placeholder="Buscar por ID, placa, rota ou responsável..." style="flex:1;min-width:200px"><select id="sfp"><option value="">Todas as situações</option><option>Confere</option><option>Revisar</option></select></div>
+  <div class="card"><h2>Detalhe - Físico</h2><div class="tw"><table><thead><tr><th>ID</th><th>Status</th><th>Estado na planilha</th><th>Situação</th><th>Resultado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Responsável</th><th>Transportadora</th><th>Ciclo</th></tr></thead><tbody id="t8"></tbody></table></div></div>
+ </div>
+ <div class="pane" id="psi" hidden>
+  <p id="smsg"></p>
+  <section class="kpis">
+    <div class="card kpi"><span>Total na planilha</span><b id="y1">0</b><i id="y1s"></i></div>
+    <div class="card kpi"><span>Repetidos</span><b id="y2">0</b><i>Foram para o Físico</i></div>
+    <div class="card kpi"><span>Só sistêmica</span><b id="y3">0</b><i>Ficam nesta aba</i></div>
+    <div class="card kpi"><span>À mais</span><b id="y4">0</b><i>Na sistêmica</i></div>
+    <div class="card kpi"><span>Faltantes</span><b id="y5">0</b><i>Na sistêmica</i></div>
+  </section>
+  <section class="grid">
+    <div class="card"><h2>Sistêmica por estado</h2><div class="ch"><canvas id="c15"></canvas></div></div>
+    <div class="card"><h2>Sistêmica por placa (top 12)</h2><div class="ch"><canvas id="c16"></canvas></div></div>
+    <div class="card"><h2>Sistêmica por rep auditoria (top 12)</h2><div class="ch"><canvas id="c17"></canvas></div></div>
+    <div class="card"><h2>Sistêmica por hora da auditoria</h2><div class="ch"><canvas id="c18"></canvas></div></div>
+  </section>
+  <div class="card" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px">
+    <input type="search" id="qy" placeholder="Buscar por ID, placa, rota ou rep..." style="flex:1;min-width:200px">
+    <select id="sfe"><option value="">Todos os estados</option><option>Correto</option><option>À mais</option><option>Faltante</option></select>
+  </div>
+  <div class="card"><h2>Detalhe - Sistêmica</h2><div class="tw"><table><thead><tr><th>ID</th><th>Estado</th><th>Resultado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Data auditoria</th></tr></thead><tbody id="t7"></tbody></table></div></div>
+ </div>
 </main>
 
 <div class="ov" id="bm" hidden role="dialog" aria-modal="true" aria-labelledby="bmt">
@@ -159,7 +201,7 @@ tr:nth-child(even) td{background:#f8f9fd}
    <label><span id="bl">MELI responsável</span><input type="text" id="br" list="brl" placeholder="Digite o nome" autocomplete="off"></label>
    <label>Ciclo<input type="text" id="bc" list="bcl" placeholder="PM, AM, SD" autocomplete="off"></label>
    <label>Transportadora<input type="text" id="bt" list="btl" placeholder="Nome da transportadora" autocomplete="off"></label>
-   <label id="bmw">Motivo<select id="bmot"><option>Não cabe no veículo</option><option>Área bloqueada</option><option>Fora de área</option></select></label>
+   <label id="bmw">Motivo<select id="bmot"><option>Não cabe no veículo</option><option>Área bloqueada</option><option>Fora de área</option><option>Autorizado a retirada</option></select></label>
   </div>
   <datalist id="brl"></datalist><datalist id="bcl"></datalist><datalist id="btl"></datalist>
   <div class="sc"><input type="text" id="bid" placeholder="Bipe ou cole o ID e aperte Enter" inputmode="numeric" autocomplete="off"><button class="btn p" id="ba">Adicionar</button></div>
@@ -180,7 +222,7 @@ tr:nth-child(even) td{background:#f8f9fd}
 <script>
 const $=s=>document.querySelector(s);
 const PAL=['#2d3277','#f5b800','#00a650','#e53935','#6c7ae0','#8d6e63'];
-let DATA={ret:[],mais:[],mov:[]}, SRC='nenhuma planilha carregada', charts={};
+let DATA={ret:[],mais:[],mov:[],aud:[],audDup:0}, SRC='nenhuma planilha carregada', AUDSRC='', charts={};
 
 /* ---------- utilidades ---------- */
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -220,8 +262,10 @@ function parseMov(rows){
   return o;
 }
 function load(buf,name){
-  try{const wb=XLSX.read(buf,{type:'array'});
+  try{const wb=/\.csv$/i.test(name||'')?XLSX.read(new TextDecoder('utf-8').decode(buf),{type:'string',raw:true}):XLSX.read(buf,{type:'array'});
     const rd=n=>XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:''});
+    const au=parseAud(rd(wb.SheetNames[0]));
+    if(au){DATA={...DATA,aud:au.rows,audDup:au.dup};AUDSRC=name;refreshFc();render();abaTrocar('sist');return}
     const nm=wb.SheetNames.find(n=>/MOVIMENTA/.test(n.toUpperCase()));
     const mov=nm?parseMov(rd(nm)):[];
     let d;
@@ -231,7 +275,7 @@ function load(buf,name){
   catch(e){alert('Não consegui ler a planilha: '+e.message)}
 }
 function setData(d,src){
-  DATA=d;SRC=src;
+  d.aud=d.aud||DATA.aud||[];d.audDup=d.audDup??DATA.audDup??0;DATA=d;SRC=src;
   refreshFc();
   render();
 }
@@ -264,7 +308,7 @@ function render(){
   mk('c3',hbar(L,PAL[2]));
   mk('c4',{type:'bar',data:{labels:cic,datasets:[{label:'Retirados',data:cic.map(c=>n(v.ret,c)),backgroundColor:PAL[0],borderRadius:4},{label:'À mais',data:cic.map(c=>n(v.mais,c)),backgroundColor:PAL[1],borderRadius:4}]},
     options:{plugins:{legend:{position:'bottom'}},layout:{padding:{top:18}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
-  tabelas();transportadora();faltantes();avarias();
+  tabelas();transportadora();faltantes();avarias();analise();
 }
 function tabelas(){
   const q=$('#q').value.toLowerCase(),v=view(),f=a=>a.filter(x=>(x.id+' '+x.resp).toLowerCase().includes(q));
@@ -309,6 +353,64 @@ function avarias(){
   mk('c14',{type:'bar',data:{labels:C.map(x=>x[0]),datasets:[{data:C.map(x=>x[1]),backgroundColor:PAL[1],borderRadius:4}]},
     options:{plugins:{legend:{display:false}},layout:{padding:{top:18}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
   tabelaAvar();
+}
+
+/* ---------- planilha de auditoria: Físico x Sistêmica ---------- */
+const estNome=s=>{const k=semAc(s);return k==='correto'?'Correto':k==='faltante'?'Faltante':k==='a mais'?'À mais':(k?cap(String(s).trim()):'Sem estado')};
+function parseAud(rows){
+  const hi=rows.findIndex(r=>r.some(c=>/SHIPMENT/.test(String(c).toUpperCase())));
+  if(hi<0)return null;
+  const h=rows[hi].map(c=>String(c).trim().toUpperCase()),f=re=>h.findIndex(v=>re.test(v));
+  const ci=f(/SHIPMENT/),pi=f(/PLACA/),di=f(/DATA/),ri=f(/ROTA/),ei=f(/ESTADO/),ai=f(/REP/);
+  if(ei<0)return null;
+  const M=new Map();let dup=0;
+  for(const r of rows.slice(hi+1)){
+    const m=String(r[ci]??'').match(/\d{8,}/);if(!m)continue;
+    if(M.has(m[0]))dup++;
+    M.set(m[0],{id:m[0],placa:String(r[pi]??'').trim()||'-',data:String(r[di]??'').trim(),rota:String(r[ri]??'').trim()||'-',estado:estNome(r[ei]),rep:nome(r[ai])});
+  }
+  return{rows:[...M.values()],dup};
+}
+const horaDe=d=>{const m=String(d).match(/\s(\d{1,2}):/);return m?m[1].padStart(2,'0')+'h':'-'};
+function cruzar(){
+  const B=new Map(),add=(a,st)=>a.forEach(x=>{if(!B.has(x.id))B.set(x.id,{st,resp:x.resp,transp:x.transp,ciclo:x.ciclo})});
+  ['Retirado','À mais','Avaria','Faltante'].forEach(st=>add(BIP.filter(x=>x.status===st),st));
+  add(DATA.ret,'Retirado');add(DATA.mais,'À mais');
+  const fis=[],sis=[],EO=x=>({'Faltante':0,'À mais':1}[x.estado]??2);
+  (DATA.aud||[]).forEach(x=>{const b=B.get(x.id);b?fis.push({...x,st:b.st,resp:b.resp,transp:b.transp,ciclo:b.ciclo,sit:b.st===x.estado?'Confere':'Revisar',res:b.st===x.estado?`Confere: bipado como ${b.st} e a planilha também diz ${x.estado}.`:`Repetido: bipado como ${b.st}, mas a planilha diz ${x.estado}. Confira.`}):sis.push({...x,res:x.estado==='Correto'?'Só na planilha: auditado como Correto, sem bipagem.':`Só na planilha: consta ${x.estado}, mas o ID não foi bipado.`})});
+  sis.sort((a,b)=>EO(a)-EO(b));
+  return{fis,sis};
+}
+let CUR={fis:[],sis:[]};
+function tabelaFis(){
+  const q=$('#qp').value.toLowerCase();
+  const sf=$('#sfp').value,a=CUR.fis.filter(x=>(!sf||x.sit===sf)&&(x.id+' '+x.placa+' '+x.rota+' '+x.rep+' '+x.resp).toLowerCase().includes(q));
+  $('#t8').innerHTML=a.map(x=>`<tr><td>${x.id}</td><td>${esc(x.st)}</td><td>${esc(x.estado)}</td><td><b style="color:${x.sit==='Confere'?'#00864a':'#b8860b'}">${x.sit}</b></td><td>${esc(x.res)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.resp)}</td><td>${esc(x.transp)}</td><td>${esc(x.ciclo)}</td></tr>`).join('')||'<tr><td colspan="11">Nenhum ID repetido</td></tr>';
+}
+function tabelaSist(){
+  const q=$('#qy').value.toLowerCase(),e=$('#sfe').value;
+  const a=CUR.sis.filter(x=>(!e||x.estado===e)&&(x.id+' '+x.placa+' '+x.rota+' '+x.rep).toLowerCase().includes(q)).slice(0,2000);
+  $('#t7').innerHTML=a.map(x=>`<tr><td>${x.id}</td><td>${esc(x.estado)}</td><td>${esc(x.res)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.data)}</td></tr>`).join('')||'<tr><td colspan="7">Nenhum registro</td></tr>';
+}
+function analise(){
+  CUR=cruzar();const{fis,sis}=CUR,all=DATA.aud||[];
+  const n=(a,e)=>a.filter(x=>x.estado===e).length,st=s=>fis.filter(x=>x.st===s).length;
+  $('#tbnp').textContent=fis.length;$('#tbns').textContent=sis.length;
+  const msg=all.length?`Fonte: ${AUDSRC}. ${DATA.audDup?DATA.audDup+' ID(s) duplicado(s) na planilha contado(s) uma vez. ':''}IDs que também foram bipados (Retirado, À mais, Avaria ou Faltante) vão para Físico; os demais ficam em Sistêmica. O filtro de ciclo não vale para estas abas.`:'Nenhuma planilha de auditoria carregada. Use Menu > Carregar planilha e escolha o arquivo CSV.';
+  $('#fmsg').textContent=msg;$('#smsg').textContent=msg;
+  $('#p1').textContent=fis.length;$('#p2').textContent=st('Retirado');$('#p3').textContent=st('À mais');$('#p4').textContent=st('Avaria');$('#p5').textContent=st('Faltante');$('#p6').textContent=fis.filter(x=>x.sit==='Revisar').length;
+  $('#y1').textContent=all.length;$('#y1s').textContent=all.length?`${n(all,'Correto')} corretos · ${n(all,'À mais')} à mais · ${n(all,'Faltante')} faltantes`:'';
+  $('#y2').textContent=fis.length;$('#y3').textContent=sis.length;$('#y4').textContent=n(sis,'À mais');$('#y5').textContent=n(sis,'Faltante');
+  const E=cnt(sis,'estado'),H=cnt(sis.map(x=>({h:horaDe(x.data)})),'h').sort((a,b)=>a[0].localeCompare(b[0]));
+  mk('c15',{type:'doughnut',data:{labels:E.map(x=>`${x[0]} (${x[1]})`),datasets:[{data:E.map(x=>x[1]),backgroundColor:PAL}]},options:{plugins:{legend:{position:'right'}}}});
+  mk('c16',hbar(cnt(sis,'placa').slice(0,12),PAL[0]));
+  mk('c17',hbar(cnt(sis,'rep').slice(0,12),PAL[2]));
+  mk('c18',{type:'bar',data:{labels:H.map(x=>x[0]),datasets:[{data:H.map(x=>x[1]),backgroundColor:PAL[1],borderRadius:4}]},
+    options:{plugins:{legend:{display:false}},layout:{padding:{top:18}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+  const S=cnt(fis,'st');
+  mk('c19',{type:'doughnut',data:{labels:S.map(x=>`${x[0]} (${x[1]})`),datasets:[{data:S.map(x=>x[1]),backgroundColor:PAL}]},options:{plugins:{legend:{position:'right'}}}});
+  mk('c20',hbar(cnt(fis,'estado'),PAL[3]));
+  tabelaFis();tabelaSist();
 }
 
 /* ---------- transportadora ---------- */
@@ -379,7 +481,7 @@ function gerarPDF(){
   y=tbl(d,y,'Pacotes retirados',['ID','Responsável','Motivo','Ciclo'],v.ret.map(x=>[x.id,x.resp,x.motivo,x.ciclo]),[38,40,76,28]);
   y=tbl(d,y,'Pacotes à mais',['ID','Responsável LOG','Ciclo'],v.mais.map(x=>[x.id,x.resp,x.ciclo]),[38,106,38]);
   y=tbl(d,y,'Pacotes faltantes',['ID','Responsável LOG','Transportadora','Ciclo'],v.falt.map(x=>[x.id,x.resp,x.transp,x.ciclo]),[38,60,56,28]);
-  tbl(d,y,'Pacotes com avaria',['ID','Responsável LOG','Transportadora','Ciclo'],v.avar.map(x=>[x.id,x.resp,x.transp,x.ciclo]),[38,60,56,28]);
+  y=tbl(d,y,'Pacotes com avaria',['ID','Responsável LOG','Transportadora','Ciclo'],v.avar.map(x=>[x.id,x.resp,x.transp,x.ciclo]),[38,60,56,28]);
   // rodapé
   const n=d.getNumberOfPages();
   for(let i=1;i<=n;i++){d.setPage(i);d.setFontSize(8);d.setTextColor(140);d.text(`Página ${i} de ${n}  |  Fonte: ${SRC}`,M,291)}
@@ -390,7 +492,7 @@ function gerarPDF(){
 let BIP=[];
 try{BIP=JSON.parse(localStorage.getItem('pcts_bip')||'[]')}catch(e){BIP=[]}
 const saveBip=()=>{try{localStorage.setItem('pcts_bip',JSON.stringify(BIP))}catch(e){}};
-const canonMot=s=>{const k=semAc(s);return k==='nao cabe no veiculo'?'Não cabe no veículo':k==='area bloqueada'?'Área bloqueada':k==='fora de area'?'Fora de área':s};
+const canonMot=s=>{const k=semAc(s);return k==='nao cabe no veiculo'?'Não cabe no veículo':k==='area bloqueada'?'Área bloqueada':k==='fora de area'?'Fora de área':k==='autorizado a retirada'?'Autorizado a retirada':s};
 const baseAll=()=>[...DATA.ret,...DATA.mais,...(DATA.mov||[])];
 function refreshFc(){
   const cur=$('#fc').value;
@@ -454,9 +556,7 @@ function bipAbrir(s){
 function bipFechar(){$('#bm').hidden=true;$('#mnb').focus()}
 let clrT;
 $('#bip').onclick=()=>bipAbrir();
-$('#bfa').onclick=()=>bipAbrir('Faltante');
 $('#bfa2').onclick=()=>bipAbrir('Faltante');
-$('#bav').onclick=()=>bipAbrir('Avaria');
 $('#bav2').onclick=()=>bipAbrir('Avaria');
 $('#bx').onclick=bipFechar;$('#bdone').onclick=bipFechar;
 $('#bs').onchange=()=>{bipTitulo();bipLabels();$('#bid').focus()};
@@ -498,17 +598,26 @@ function exportarExcel(){
   const{ret,mais,falt,avar}=excelRows();
   const folha=(h,rows,w)=>{const s=XLSX.utils.aoa_to_sheet([h,...rows]);s['!cols']=w.map(wch=>({wch}));return s};
   const wb=XLSX.utils.book_new();
+  const au=DATA.aud||[],cz=cruzar(),nE=e=>au.filter(x=>x.estado===e).length;
+  if(au.length){
+    const R=[['Resumo da comparação'],[],['Planilha de auditoria',AUDSRC],['Total de IDs na planilha',au.length],['   Corretos',nE('Correto')],['   À mais',nE('À mais')],['   Faltantes',nE('Faltante')],['IDs duplicados na planilha (contados uma vez)',DATA.audDup||0],[],['Repetidos: estão na planilha e foram bipados (aba Físico)',cz.fis.length],['   Confere (status bipado igual ao estado da planilha)',cz.fis.filter(x=>x.sit==='Confere').length],['   Revisar (status bipado diferente do estado)',cz.fis.filter(x=>x.sit==='Revisar').length],['Só na planilha, não bipados (aba Sistêmica)',cz.sis.length],[],['Como a comparação funciona'],['O número do ID de cada linha da planilha é procurado entre os IDs bipados (Retirado, À mais, Avaria, Faltante) e os retirados/à mais da planilha principal.'],['Se o ID aparece nos dois lugares, ele vai para a aba Físico. Se aparece só na planilha, fica na aba Sistêmica.'],['Situação Confere: status bipado igual ao estado da planilha. Situação Revisar: são diferentes; veja a coluna Resultado.']];
+    const sr=XLSX.utils.aoa_to_sheet(R);sr['!cols']=[{wch:70},{wch:34}];XLSX.utils.book_append_sheet(wb,sr,'Resumo');
+  }
   XLSX.utils.book_append_sheet(wb,folha(XHR,ret,[16,30,24,22,10,20]),'Retirados');
   XLSX.utils.book_append_sheet(wb,folha(XHM,mais,[16,30,22,10,20]),'À mais');
   XLSX.utils.book_append_sheet(wb,folha(XHM,falt,[16,30,22,10,20]),'Faltantes');
   XLSX.utils.book_append_sheet(wb,folha(XHM,avar,[16,30,22,10,20]),'Avarias');
+  if(au.length){
+    XLSX.utils.book_append_sheet(wb,folha(['ID','Status bipado','Estado na planilha','Situação','Resultado','Placa','Rota','Rep auditoria','Responsável','Transportadora','Ciclo','Data auditoria'],cz.fis.map(x=>[x.id,x.st,x.estado,x.sit,x.res,x.placa,x.rota,x.rep,x.resp,x.transp,x.ciclo,x.data]),[14,14,18,11,62,12,24,34,24,20,8,20]),'Físico');
+    XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria'],cz.sis.map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data]),[14,10,56,12,24,34,20]),'Sistêmica');
+  }
   XLSX.writeFile(wb,'relatorio-pcts-'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 $('#xls').onclick=exportarExcel;$('#bxl').onclick=exportarExcel;
 
 /* ---------- abas ---------- */
 function abaTrocar(t){
-  $('#pg').hidden=t!=='geral';$('#pf').hidden=t!=='falt';$('#pa').hidden=t!=='avar';
+  $('#pg').hidden=t!=='geral';$('#pf').hidden=t!=='falt';$('#pa').hidden=t!=='avar';$('#pfi').hidden=t!=='fis';$('#psi').hidden=t!=='sist';
   document.querySelectorAll('.tb').forEach(b=>{const on=b.dataset.tab===t;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});
   Object.values(charts).forEach(c=>{try{c.resize()}catch(e){}});
 }
@@ -523,7 +632,7 @@ document.addEventListener('click',()=>abreMenu(false));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#mnl').hidden){abreMenu(false);$('#mnb').focus()}});
 
 /* ---------- eventos e início ---------- */
-$('#fc').onchange=render;$('#q').oninput=tabelas;$('#qf').oninput=tabelaFalt;$('#qa').oninput=tabelaAvar;$('#pdf').onclick=()=>{gerarPDF();if(BIP.length)exportarExcel()};
+$('#fc').onchange=render;$('#q').oninput=tabelas;$('#qf').oninput=tabelaFalt;$('#qa').oninput=tabelaAvar;$('#qy').oninput=tabelaSist;$('#sfe').onchange=tabelaSist;$('#qp').oninput=tabelaFis;$('#sfp').onchange=tabelaFis;$('#pdf').onclick=()=>{gerarPDF();if(BIP.length)exportarExcel()};
 $('#file').onchange=e=>{const f=e.target.files[0];if(f)f.arrayBuffer().then(b=>load(b,f.name))};
 (async()=>{
   setData(DATA,SRC); // começa zerado até haver planilha
