@@ -63,6 +63,19 @@ tr:nth-child(even) td{background:#f8f9fd}
 .mnl[hidden]{display:none}
 .mi{display:block;text-align:left;font:inherit;font-size:.92rem;font-weight:600;background:transparent;border:0;border-radius:8px;padding:11px 12px;cursor:pointer;color:var(--ink)}
 .mi:hover,.mi:focus-visible{background:#eef0fa;outline:none}
+.g2{display:grid;grid-template-columns:1fr;gap:14px;margin-bottom:16px}
+@media(min-width:1000px){.g2{grid-template-columns:minmax(0,1.45fr) minmax(0,1fr)}}
+.g2 table{font-size:.8rem}
+.g2 th,.g2 td{padding:6px}
+.ah{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.ah h2{margin:0}
+.ac{display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--mut)}
+.ac .btn:disabled{opacity:.45;cursor:not-allowed}
+.ck{width:17px;height:17px;cursor:pointer;accent-color:var(--pri)}
+tr.sel td{background:#fff8d6!important}
+#t7 tr,#t9 tr{cursor:pointer}
+#rmsg{font-size:.85rem;min-height:1.2em;margin:0 0 10px;color:var(--mut)}
+#rmsg.ok{color:#00864a}
 </style>
 </head>
 <body>
@@ -178,6 +191,7 @@ tr:nth-child(even) td{background:#f8f9fd}
     <div class="card kpi"><span>Só sistêmica</span><b id="y3">0</b><i>Ficam nesta aba</i></div>
     <div class="card kpi"><span>À mais</span><b id="y4">0</b><i>Na sistêmica</i></div>
     <div class="card kpi"><span>Faltantes</span><b id="y5">0</b><i>Na sistêmica</i></div>
+    <div class="card kpi"><span>Reatribuição</span><b id="y6">0</b><i>Retirados de rota</i></div>
   </section>
   <section class="grid">
     <div class="card"><h2>Sistêmica por estado</h2><div class="ch"><canvas id="c15"></canvas></div></div>
@@ -189,7 +203,19 @@ tr:nth-child(even) td{background:#f8f9fd}
     <input type="search" id="qy" placeholder="Buscar por ID, placa, rota ou rep..." style="flex:1;min-width:200px">
     <select id="sfe"><option value="">Todos os estados</option><option>Correto</option><option>À mais</option><option>Faltante</option></select>
   </div>
-  <div class="card"><h2>Detalhe - Sistêmica</h2><div class="tw"><table><thead><tr><th>ID</th><th>Estado</th><th>Resultado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Data auditoria</th></tr></thead><tbody id="t7"></tbody></table></div></div>
+  <p id="rmsg" role="status"></p>
+  <section class="g2">
+    <div class="card">
+      <div class="ah"><h2>Detalhe - Sistêmica (<span id="sn">0</span>)</h2>
+        <div class="ac"><span id="selc">0 selecionados</span><button class="btn p" id="mvb" disabled>Mover para Reatribuição →</button></div></div>
+      <div class="tw"><table><thead><tr><th><input type="checkbox" class="ck" id="sela" aria-label="Selecionar todos os IDs da lista"></th><th>ID</th><th>Estado</th><th>Resultado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Data auditoria</th></tr></thead><tbody id="t7"></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="ah"><h2>Retirados de rota - Reatribuição (<span id="rn">0</span>)</h2>
+        <div class="ac"><span id="rselc">0 selecionados</span><button class="btn" id="rvb" disabled>← Devolver para Sistêmica</button></div></div>
+      <div class="tw"><table><thead><tr><th><input type="checkbox" class="ck" id="rsela" aria-label="Selecionar todos os IDs da Reatribuição"></th><th>ID</th><th>Estado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Data auditoria</th><th>Movido em</th></tr></thead><tbody id="t9"></tbody></table></div>
+    </div>
+  </section>
  </div>
 </main>
 
@@ -379,7 +405,8 @@ function cruzar(){
   const fis=[],sis=[],EO=x=>({'Faltante':0,'À mais':1}[x.estado]??2);
   (DATA.aud||[]).forEach(x=>{const b=B.get(x.id);b?fis.push({...x,st:b.st,resp:b.resp,transp:b.transp,ciclo:b.ciclo,sit:b.st===x.estado?'Confere':'Revisar',res:b.st===x.estado?`Confere: bipado como ${b.st} e a planilha também diz ${x.estado}.`:`Repetido: bipado como ${b.st}, mas a planilha diz ${x.estado}. Confira.`}):sis.push({...x,res:x.estado==='Correto'?'Só na planilha: auditado como Correto, sem bipagem.':`Só na planilha: consta ${x.estado}, mas o ID não foi bipado.`})});
   sis.sort((a,b)=>EO(a)-EO(b));
-  return{fis,sis};
+  const rid=new Set(REAT.map(r=>r.id));
+  return{fis,sis:sis.filter(x=>!rid.has(x.id))};
 }
 let CUR={fis:[],sis:[]};
 function tabelaFis(){
@@ -387,10 +414,15 @@ function tabelaFis(){
   const sf=$('#sfp').value,a=CUR.fis.filter(x=>(!sf||x.sit===sf)&&(x.id+' '+x.placa+' '+x.rota+' '+x.rep+' '+x.resp).toLowerCase().includes(q));
   $('#t8').innerHTML=a.map(x=>`<tr><td>${x.id}</td><td>${esc(x.st)}</td><td>${esc(x.estado)}</td><td><b style="color:${x.sit==='Confere'?'#00864a':'#b8860b'}">${x.sit}</b></td><td>${esc(x.res)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.resp)}</td><td>${esc(x.transp)}</td><td>${esc(x.ciclo)}</td></tr>`).join('')||'<tr><td colspan="11">Nenhum ID repetido</td></tr>';
 }
-function tabelaSist(){
+function visSis(){
   const q=$('#qy').value.toLowerCase(),e=$('#sfe').value;
-  const a=CUR.sis.filter(x=>(!e||x.estado===e)&&(x.id+' '+x.placa+' '+x.rota+' '+x.rep).toLowerCase().includes(q)).slice(0,2000);
-  $('#t7').innerHTML=a.map(x=>`<tr><td>${x.id}</td><td>${esc(x.estado)}</td><td>${esc(x.res)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.data)}</td></tr>`).join('')||'<tr><td colspan="7">Nenhum registro</td></tr>';
+  return CUR.sis.filter(x=>(!e||x.estado===e)&&(x.id+' '+x.placa+' '+x.rota+' '+x.rep).toLowerCase().includes(q)).slice(0,2000);
+}
+function tabelaSist(){
+  const a=visSis();
+  $('#sn').textContent=a.length;
+  $('#t7').innerHTML=a.map(x=>`<tr data-id="${x.id}" class="${SELS.has(x.id)?'sel':''}"><td><input type="checkbox" class="ck" ${SELS.has(x.id)?'checked':''} aria-label="Selecionar ${x.id}"></td><td>${x.id}</td><td>${esc(x.estado)}</td><td>${esc(x.res)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.data)}</td></tr>`).join('')||'<tr><td colspan="8">Nenhum registro</td></tr>';
+  selUi();
 }
 function analise(){
   CUR=cruzar();const{fis,sis}=CUR,all=DATA.aud||[];
@@ -410,7 +442,7 @@ function analise(){
   const S=cnt(fis,'st');
   mk('c19',{type:'doughnut',data:{labels:S.map(x=>`${x[0]} (${x[1]})`),datasets:[{data:S.map(x=>x[1]),backgroundColor:PAL}]},options:{plugins:{legend:{position:'right'}}}});
   mk('c20',hbar(cnt(fis,'estado'),PAL[3]));
-  tabelaFis();tabelaSist();
+  tabelaFis();tabelaSist();tabelaReat();$('#y6').textContent=REAT.length;
 }
 
 /* ---------- transportadora ---------- */
@@ -611,9 +643,52 @@ function exportarExcel(){
     XLSX.utils.book_append_sheet(wb,folha(['ID','Status bipado','Estado na planilha','Situação','Resultado','Placa','Rota','Rep auditoria','Responsável','Transportadora','Ciclo','Data auditoria'],cz.fis.map(x=>[x.id,x.st,x.estado,x.sit,x.res,x.placa,x.rota,x.rep,x.resp,x.transp,x.ciclo,x.data]),[14,14,18,11,62,12,24,34,24,20,8,20]),'Físico');
     XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria'],cz.sis.map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data]),[14,10,56,12,24,34,20]),'Sistêmica');
   }
+  if(REAT.length)XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria','Movido em'],REAT.map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data,horaFmt({at:x.at})]),[14,10,56,12,24,34,20,20]),'Retirados de rota');
   XLSX.writeFile(wb,'relatorio-pcts-'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 $('#xls').onclick=exportarExcel;$('#bxl').onclick=exportarExcel;
+
+/* ---------- movimentação: Sistêmica -> Retirados de rota (Reatribuição) ---------- */
+const SELS=new Set(),SELR=new Set();
+let REAT=[];
+try{REAT=JSON.parse(localStorage.getItem('pcts_reat')||'[]')}catch(e){REAT=[]}
+const saveReat=()=>{try{localStorage.setItem('pcts_reat',JSON.stringify(REAT))}catch(e){}};
+function rmsg(t,c){const m=$('#rmsg');m.textContent=t;m.className=c||''}
+function selUi(){
+  const a=visSis();
+  $('#selc').textContent=SELS.size+(SELS.size===1?' selecionado':' selecionados');
+  $('#mvb').disabled=!SELS.size;
+  $('#mvb').textContent=SELS.size?`Mover ${SELS.size} para Reatribuição →`:'Mover para Reatribuição →';
+  $('#sela').checked=a.length>0&&a.every(x=>SELS.has(x.id));
+  $('#rselc').textContent=SELR.size+(SELR.size===1?' selecionado':' selecionados');
+  $('#rvb').disabled=!SELR.size;
+  $('#rsela').checked=REAT.length>0&&REAT.every(x=>SELR.has(x.id));
+}
+function tabelaReat(){
+  $('#rn').textContent=REAT.length;
+  $('#t9').innerHTML=REAT.slice().reverse().map(x=>`<tr data-id="${x.id}" class="${SELR.has(x.id)?'sel':''}"><td><input type="checkbox" class="ck" ${SELR.has(x.id)?'checked':''} aria-label="Selecionar ${x.id}"></td><td>${x.id}</td><td>${esc(x.estado)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.data)}</td><td>${esc(horaFmt({at:x.at}))}</td></tr>`).join('')||'<tr><td colspan="8">Nenhum ID movido. Selecione IDs na tabela ao lado e clique em Mover.</td></tr>';
+  selUi();
+}
+function linhaClick(set,e){
+  const tr=e.target.closest('tr[data-id]');if(!tr)return;
+  const id=tr.dataset.id,on=e.target.matches('input.ck')?e.target.checked:!set.has(id);
+  on?set.add(id):set.delete(id);
+  tr.classList.toggle('sel',on);tr.querySelector('input.ck').checked=on;selUi();
+}
+$('#t7').addEventListener('click',e=>linhaClick(SELS,e));
+$('#t9').addEventListener('click',e=>linhaClick(SELR,e));
+$('#sela').onchange=e=>{visSis().forEach(x=>e.target.checked?SELS.add(x.id):SELS.delete(x.id));tabelaSist()};
+$('#rsela').onchange=e=>{REAT.forEach(x=>e.target.checked?SELR.add(x.id):SELR.delete(x.id));tabelaReat()};
+$('#mvb').onclick=()=>{
+  const now=new Date().toISOString();let n=0;
+  CUR.sis.filter(x=>SELS.has(x.id)).forEach(x=>{if(!REAT.some(r=>r.id===x.id)){REAT.push({id:x.id,estado:x.estado,res:x.res,placa:x.placa,rota:x.rota,rep:x.rep,data:x.data,at:now});n++}});
+  SELS.clear();saveReat();analise();
+  rmsg(`${n} ID${n===1?'':'s'} movido${n===1?'':'s'} para Retirados de rota (Reatribuição).`,'ok');
+};
+$('#rvb').onclick=()=>{
+  const n=SELR.size;REAT=REAT.filter(x=>!SELR.has(x.id));SELR.clear();saveReat();analise();
+  rmsg(`${n} ID${n===1?'':'s'} devolvido${n===1?'':'s'} para a Sistêmica.`,'ok');
+};
 
 /* ---------- abas ---------- */
 function abaTrocar(t){
