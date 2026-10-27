@@ -76,6 +76,9 @@ tr.sel td{background:#fff8d6!important}
 #t7 tr,#t9 tr{cursor:pointer}
 #rmsg{font-size:.85rem;min-height:1.2em;margin:0 0 10px;color:var(--mut)}
 #rmsg.ok{color:#00864a}
+#t10 tr,#t11 tr{cursor:pointer}
+#dmsg,#drmsg{font-size:.85rem;min-height:1.2em;margin:0 0 10px;color:var(--mut)}
+#drmsg.ok{color:#00864a}
 </style>
 </head>
 <body>
@@ -100,6 +103,7 @@ tr.sel td{background:#fff8d6!important}
   <button class="tb" id="tba" role="tab" aria-selected="false" data-tab="avar">Avarias (<span id="tbna">0</span>)</button>
   <button class="tb" id="tbp" role="tab" aria-selected="false" data-tab="fis">Físico (<span id="tbnp">0</span>)</button>
   <button class="tb" id="tbs" role="tab" aria-selected="false" data-tab="sist">Sistêmica (<span id="tbns">0</span>)</button>
+  <button class="tb" id="tbd" role="tab" aria-selected="false" data-tab="desc">Desconteinerizado (<span id="tbnd">0</span>)</button>
 </nav>
 <main>
  <div class="pane" id="pg">
@@ -191,7 +195,7 @@ tr.sel td{background:#fff8d6!important}
     <div class="card kpi"><span>Só sistêmica</span><b id="y3">0</b><i>Ficam nesta aba</i></div>
     <div class="card kpi"><span>À mais</span><b id="y4">0</b><i>Na sistêmica</i></div>
     <div class="card kpi"><span>Faltantes</span><b id="y5">0</b><i>Na sistêmica</i></div>
-    <div class="card kpi"><span>Reatribuição</span><b id="y6">0</b><i>Retirados de rota</i></div>
+    <div class="card kpi"><span>Reatribuição</span><b id="y6">0</b><i>Pacotes movimentados</i></div>
   </section>
   <section class="grid">
     <div class="card"><h2>Sistêmica por estado</h2><div class="ch"><canvas id="c15"></canvas></div></div>
@@ -211,9 +215,45 @@ tr.sel td{background:#fff8d6!important}
       <div class="tw"><table><thead><tr><th><input type="checkbox" class="ck" id="sela" aria-label="Selecionar todos os IDs da lista"></th><th>ID</th><th>Estado</th><th>Resultado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Data auditoria</th></tr></thead><tbody id="t7"></tbody></table></div>
     </div>
     <div class="card">
-      <div class="ah"><h2>Retirados de rota - Reatribuição (<span id="rn">0</span>)</h2>
+      <div class="ah"><h2>Pacotes movimentados - Reatribuição (<span id="rn">0</span>)</h2>
         <div class="ac"><span id="rselc">0 selecionados</span><button class="btn" id="rvb" disabled>← Devolver para Sistêmica</button></div></div>
       <div class="tw"><table><thead><tr><th><input type="checkbox" class="ck" id="rsela" aria-label="Selecionar todos os IDs da Reatribuição"></th><th>ID</th><th>Estado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Data auditoria</th><th>Movido em</th></tr></thead><tbody id="t9"></tbody></table></div>
+    </div>
+  </section>
+ </div>
+
+ <div class="pane" id="pd" hidden>
+  <p id="dmsg"></p>
+  <section class="kpis">
+    <div class="card kpi"><span>Total desconteinerizado</span><b id="d1">0</b><i id="d1s"></i></div>
+    <div class="card kpi"><span>Na lista</span><b id="d2">0</b><i>Ainda não reatribuídos</i></div>
+    <div class="card kpi"><span>Reatribuição</span><b id="d3">0</b><i>IDs movidos</i></div>
+    <div class="card kpi"><span>Pendentes</span><b id="d4">0</b><i>Estado Pendente</i></div>
+    <div class="card kpi"><span>Maior problem solver</span><b id="d5" style="font-size:1.4rem;margin-top:10px">-</b><i id="d5s"></i></div>
+  </section>
+  <section class="grid">
+    <div class="card"><h2>Por motivo da exclusão</h2><div class="ch"><canvas id="c21"></canvas></div></div>
+    <div class="card"><h2>Por problem solver (top 12)</h2><div class="ch"><canvas id="c22"></canvas></div></div>
+    <div class="card"><h2>Por estado</h2><div class="ch"><canvas id="c23"></canvas></div></div>
+    <div class="card"><h2>Por dia de criação</h2><div class="ch"><canvas id="c24"></canvas></div></div>
+  </section>
+  <div class="card" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+    <input type="search" id="qd" placeholder="Buscar por ID, problem solver ou motivo..." style="flex:1;min-width:200px">
+    <select id="sfd"><option value="">Todos os estados</option><option>Pendente</option><option>Encerrado</option><option>Cancelada</option></select>
+    <select id="sfmd"><option value="">Todos os motivos</option></select>
+    <label class="btn p" style="display:inline-block">Carregar arquivo<input type="file" id="filed" accept=".csv,.xlsx,.xls" hidden></label>
+  </div>
+  <p id="drmsg" role="status"></p>
+  <section class="g2">
+    <div class="card">
+      <div class="ah"><h2>Desconteinerizado (<span id="dsn">0</span>)</h2>
+        <div class="ac"><span id="dselc">0 selecionados</span><button class="btn p" id="dmvb" disabled>Mover para Reatribuição →</button></div></div>
+      <div class="tw"><table><thead><tr><th><input type="checkbox" class="ck" id="dsela" aria-label="Selecionar todos os IDs da lista"></th><th>ID do pacote</th><th>Estado</th><th>Problem solver</th><th>Criação</th><th>Motivo da exclusão</th></tr></thead><tbody id="t10"></tbody></table></div>
+    </div>
+    <div class="card">
+      <div class="ah"><h2>Reatribuição (<span id="drn">0</span>)</h2>
+        <div class="ac"><span id="drselc">0 selecionados</span><button class="btn" id="drvb" disabled>← Devolver</button></div></div>
+      <div class="tw"><table><thead><tr><th><input type="checkbox" class="ck" id="drsela" aria-label="Selecionar todos os IDs da Reatribuição"></th><th>ID do pacote</th><th>Estado</th><th>Problem solver</th><th>Motivo</th><th>Movido em</th></tr></thead><tbody id="t11"></tbody></table></div>
     </div>
   </section>
  </div>
@@ -290,6 +330,8 @@ function parseMov(rows){
 function load(buf,name){
   try{const wb=/\.csv$/i.test(name||'')?XLSX.read(new TextDecoder('utf-8').decode(buf),{type:'string',raw:true}):XLSX.read(buf,{type:'array'});
     const rd=n=>XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:''});
+    const dd=parseDesc(rd(wb.SheetNames[0]));
+    if(dd){carregarDesc(buf,name);return}
     const au=parseAud(rd(wb.SheetNames[0]));
     if(au){DATA={...DATA,aud:au.rows,audDup:au.dup};AUDSRC=name;refreshFc();render();abaTrocar('sist');return}
     const nm=wb.SheetNames.find(n=>/MOVIMENTA/.test(n.toUpperCase()));
@@ -643,12 +685,14 @@ function exportarExcel(){
     XLSX.utils.book_append_sheet(wb,folha(['ID','Status bipado','Estado na planilha','Situação','Resultado','Placa','Rota','Rep auditoria','Responsável','Transportadora','Ciclo','Data auditoria'],cz.fis.map(x=>[x.id,x.st,x.estado,x.sit,x.res,x.placa,x.rota,x.rep,x.resp,x.transp,x.ciclo,x.data]),[14,14,18,11,62,12,24,34,24,20,8,20]),'Físico');
     XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria'],cz.sis.map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data]),[14,10,56,12,24,34,20]),'Sistêmica');
   }
-  if(REAT.length)XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria','Movido em'],REAT.map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data,horaFmt({at:x.at})]),[14,10,56,12,24,34,20,20]),'Retirados de rota');
+  if(REAT.length)XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria','Movido em'],REAT.map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data,horaFmt({at:x.at})]),[14,10,56,12,24,34,20,20]),'Pacotes movimentados');
+  if(DESC.length)XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Criação','Motivo da exclusão'],descLista().map(x=>[x.id,x.estado,x.solver,x.data,x.motivo]),[16,12,34,20,26]),'Desconteinerizado');
+  if(REATD.length)XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Motivo da exclusão','Criação','Movido em'],REATD.map(x=>[x.id,x.estado,x.solver,x.motivo,x.data,horaFmt({at:x.at})]),[16,12,34,26,20,20]),'Reatribuição');
   XLSX.writeFile(wb,'relatorio-pcts-'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 $('#xls').onclick=exportarExcel;$('#bxl').onclick=exportarExcel;
 
-/* ---------- movimentação: Sistêmica -> Retirados de rota (Reatribuição) ---------- */
+/* ---------- movimentação: Sistêmica -> Pacotes movimentados (Reatribuição) ---------- */
 const SELS=new Set(),SELR=new Set();
 let REAT=[];
 try{REAT=JSON.parse(localStorage.getItem('pcts_reat')||'[]')}catch(e){REAT=[]}
@@ -683,16 +727,114 @@ $('#mvb').onclick=()=>{
   const now=new Date().toISOString();let n=0;
   CUR.sis.filter(x=>SELS.has(x.id)).forEach(x=>{if(!REAT.some(r=>r.id===x.id)){REAT.push({id:x.id,estado:x.estado,res:x.res,placa:x.placa,rota:x.rota,rep:x.rep,data:x.data,at:now});n++}});
   SELS.clear();saveReat();analise();
-  rmsg(`${n} ID${n===1?'':'s'} movido${n===1?'':'s'} para Retirados de rota (Reatribuição).`,'ok');
+  rmsg(`${n} ID${n===1?'':'s'} movido${n===1?'':'s'} para Pacotes movimentados (Reatribuição).`,'ok');
 };
 $('#rvb').onclick=()=>{
   const n=SELR.size;REAT=REAT.filter(x=>!SELR.has(x.id));SELR.clear();saveReat();analise();
   rmsg(`${n} ID${n===1?'':'s'} devolvido${n===1?'':'s'} para a Sistêmica.`,'ok');
 };
 
+/* ---------- desconteinerizado: arquivo do problem solving + Reatribuição ---------- */
+function parseDesc(rows){
+  const hi=rows.findIndex(r=>r.some(c=>/^ID DO PACOTE$/.test(String(c).trim().toUpperCase())));
+  if(hi<0)return null;
+  const h=rows[hi].map(c=>String(c).trim().toUpperCase()),f=re=>h.findIndex(v=>re.test(v));
+  const ci=f(/^ID DO PACOTE$/),ei=f(/^ESTADO$/),si=f(/PROBLEM SOLVER/),di=f(/CRIA/),mi=f(/EXCLUS/),li=f(/LINK/),pi=f(/^PROBLEMA$/);
+  const M=new Map();let dup=0;
+  for(const r of rows.slice(hi+1)){
+    const m=String(r[ci]??'').match(/\d{8,}/);if(!m)continue;
+    if(M.has(m[0])){dup++;continue}
+    const dt=String(r[di]??'').trim(),dm=dt.match(/\|\s*(\d{1,2}\/\w+)/);
+    M.set(m[0],{id:m[0],estado:cap(String(r[ei]??'').trim())||'Sem estado',solver:nome(r[si]),data:dt,dia:dm?dm[1]:'-',motivo:cap(String(r[mi]??'').trim())||'Não informado',link:String(r[li]??'').trim(),prob:String(r[pi]??'').trim()});
+  }
+  return{rows:[...M.values()],dup};
+}
+let DESC=[],DESCDUP=0,DESCSRC='';
+const SELD=new Set(),SELDR=new Set();
+let REATD=[];
+try{REATD=JSON.parse(localStorage.getItem('pcts_reatd')||'[]')}catch(e){REATD=[]}
+const saveReatD=()=>{try{localStorage.setItem('pcts_reatd',JSON.stringify(REATD))}catch(e){}};
+function dmsg(t,c){const m=$('#drmsg');m.textContent=t;m.className=c||''}
+function carregarDesc(buf,name){
+  try{
+    const wb=/\.csv$/i.test(name||'')?XLSX.read(new TextDecoder('utf-8').decode(buf),{type:'string',raw:true}):XLSX.read(buf,{type:'array'});
+    const d=parseDesc(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1,defval:''}));
+    if(!d)throw new Error('cabeçalho "ID do pacote" não encontrado');
+    DESC=d.rows;DESCDUP=d.dup;DESCSRC=name;SELD.clear();
+    const ms=[...new Set(DESC.map(x=>x.motivo))].sort();
+    $('#sfmd').innerHTML='<option value="">Todos os motivos</option>'+ms.map(x=>`<option>${esc(x)}</option>`).join('');
+    descRender();abaTrocar('desc');
+  }catch(e){alert('Não consegui ler o arquivo: '+e.message)}
+}
+const descLista=()=>{const r=new Set(REATD.map(x=>x.id));return DESC.filter(x=>!r.has(x.id))};
+function visDesc(){
+  const q=$('#qd').value.toLowerCase(),e=$('#sfd').value,m=$('#sfmd').value;
+  return descLista().filter(x=>(!e||x.estado===e)&&(!m||x.motivo===m)&&(x.id+' '+x.solver+' '+x.motivo).toLowerCase().includes(q));
+}
+function descSelUi(){
+  const a=visDesc().slice(0,2000);
+  $('#dselc').textContent=SELD.size+(SELD.size===1?' selecionado':' selecionados');
+  $('#dmvb').disabled=!SELD.size;
+  $('#dmvb').textContent=SELD.size?`Mover ${SELD.size} para Reatribuição →`:'Mover para Reatribuição →';
+  $('#dsela').checked=a.length>0&&a.every(x=>SELD.has(x.id));
+  $('#drselc').textContent=SELDR.size+(SELDR.size===1?' selecionado':' selecionados');
+  $('#drvb').disabled=!SELDR.size;
+  $('#drsela').checked=REATD.length>0&&REATD.every(x=>SELDR.has(x.id));
+}
+function tabelaDesc(){
+  const all=visDesc(),a=all.slice(0,2000);
+  $('#dsn').textContent=all.length+(all.length>a.length?` · mostrando ${a.length}`:'');
+  $('#t10').innerHTML=a.map(x=>`<tr data-id="${x.id}" class="${SELD.has(x.id)?'sel':''}"><td><input type="checkbox" class="ck" ${SELD.has(x.id)?'checked':''} aria-label="Selecionar ${x.id}"></td><td>${x.id}</td><td>${esc(x.estado)}</td><td>${esc(x.solver)}</td><td>${esc(x.data)}</td><td>${esc(x.motivo)}</td></tr>`).join('')||'<tr><td colspan="6">Nenhum registro. Carregue o arquivo CSV.</td></tr>';
+  descSelUi();
+}
+function tabelaReatD(){
+  $('#drn').textContent=REATD.length;
+  $('#t11').innerHTML=REATD.slice().reverse().map(x=>`<tr data-id="${x.id}" class="${SELDR.has(x.id)?'sel':''}"><td><input type="checkbox" class="ck" ${SELDR.has(x.id)?'checked':''} aria-label="Selecionar ${x.id}"></td><td>${x.id}</td><td>${esc(x.estado)}</td><td>${esc(x.solver)}</td><td>${esc(x.motivo)}</td><td>${esc(horaFmt({at:x.at}))}</td></tr>`).join('')||'<tr><td colspan="6">Nenhum ID movido. Selecione IDs na tabela ao lado e clique em Mover.</td></tr>';
+  descSelUi();
+}
+function descRender(){
+  const L=descLista();
+  $('#tbnd').textContent=DESC.length;
+  $('#dmsg').textContent=DESC.length?`Fonte: ${DESCSRC}. ${DESCDUP?DESCDUP+' linha(s) com ID repetido contada(s) uma vez (mantida a mais recente). ':''}O filtro de ciclo não vale para esta aba.`:'Nenhum arquivo carregado. Use "Carregar arquivo" (CSV do problem solving) ou Menu > Carregar planilha.';
+  $('#d1').textContent=DESC.length;$('#d1s').textContent=DESC.length?`${DESCDUP} repetidos ignorados`:'';
+  $('#d2').textContent=L.length;$('#d3').textContent=REATD.length;
+  $('#d4').textContent=DESC.filter(x=>x.estado==='Pendente').length;
+  const S=cnt(DESC,'solver'),t=S[0]||['-',0];
+  $('#d5').textContent=t[0];$('#d5s').textContent=DESC.length?`${t[1]} pacotes (${Math.round(t[1]/DESC.length*100)}%)`:'';
+  const D=[];DESC.forEach(x=>{let e=D.find(y=>y[0]===x.dia);if(!e)D.push(e=[x.dia,0]);e[1]++});D.reverse();
+  mk('c21',hbar(cnt(DESC,'motivo'),PAL[3]));
+  mk('c22',hbar(S.slice(0,12),PAL[0]));
+  const E=cnt(DESC,'estado');
+  mk('c23',{type:'doughnut',data:{labels:E.map(x=>`${x[0]} (${x[1]})`),datasets:[{data:E.map(x=>x[1]),backgroundColor:PAL}]},options:{plugins:{legend:{position:'right'}}}});
+  mk('c24',{type:'bar',data:{labels:D.map(x=>x[0]),datasets:[{data:D.map(x=>x[1]),backgroundColor:PAL[1],borderRadius:4}]},options:{plugins:{legend:{display:false}},layout:{padding:{top:18}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
+  tabelaDesc();tabelaReatD();
+}
+function dLinha(set,e){
+  const tr=e.target.closest('tr[data-id]');if(!tr)return;
+  const id=tr.dataset.id,on=e.target.matches('input.ck')?e.target.checked:!set.has(id);
+  on?set.add(id):set.delete(id);
+  tr.classList.toggle('sel',on);tr.querySelector('input.ck').checked=on;descSelUi();
+}
+$('#t10').addEventListener('click',e=>dLinha(SELD,e));
+$('#t11').addEventListener('click',e=>dLinha(SELDR,e));
+$('#dsela').onchange=e=>{visDesc().slice(0,2000).forEach(x=>e.target.checked?SELD.add(x.id):SELD.delete(x.id));tabelaDesc()};
+$('#drsela').onchange=e=>{REATD.forEach(x=>e.target.checked?SELDR.add(x.id):SELDR.delete(x.id));tabelaReatD()};
+$('#dmvb').onclick=()=>{
+  const now=new Date().toISOString();let n=0;
+  DESC.filter(x=>SELD.has(x.id)).forEach(x=>{if(!REATD.some(r=>r.id===x.id)){REATD.push({id:x.id,estado:x.estado,solver:x.solver,motivo:x.motivo,data:x.data,at:now});n++}});
+  SELD.clear();saveReatD();descRender();
+  dmsg(`${n} ID${n===1?'':'s'} movido${n===1?'':'s'} para Reatribuição.`,'ok');
+};
+$('#drvb').onclick=()=>{
+  const n=SELDR.size;REATD=REATD.filter(x=>!SELDR.has(x.id));SELDR.clear();saveReatD();descRender();
+  dmsg(`${n} ID${n===1?'':'s'} devolvido${n===1?'':'s'} para a lista.`,'ok');
+};
+$('#qd').oninput=tabelaDesc;$('#sfd').onchange=tabelaDesc;$('#sfmd').onchange=tabelaDesc;
+$('#filed').onchange=e=>{const f=e.target.files[0];if(f)f.arrayBuffer().then(b=>carregarDesc(b,f.name));e.target.value=''};
+
 /* ---------- abas ---------- */
 function abaTrocar(t){
-  $('#pg').hidden=t!=='geral';$('#pf').hidden=t!=='falt';$('#pa').hidden=t!=='avar';$('#pfi').hidden=t!=='fis';$('#psi').hidden=t!=='sist';
+  $('#pg').hidden=t!=='geral';$('#pf').hidden=t!=='falt';$('#pa').hidden=t!=='avar';$('#pfi').hidden=t!=='fis';$('#psi').hidden=t!=='sist';$('#pd').hidden=t!=='desc';
   document.querySelectorAll('.tb').forEach(b=>{const on=b.dataset.tab===t;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});
   Object.values(charts).forEach(c=>{try{c.resize()}catch(e){}});
 }
@@ -711,6 +853,7 @@ $('#fc').onchange=render;$('#q').oninput=tabelas;$('#qf').oninput=tabelaFalt;$('
 $('#file').onchange=e=>{const f=e.target.files[0];if(f)f.arrayBuffer().then(b=>load(b,f.name))};
 (async()=>{
   setData(DATA,SRC); // começa zerado até haver planilha
+  descRender();
   try{const r=await fetch('dados.xlsx',{cache:'no-store'});if(r.ok)load(await r.arrayBuffer(),'dados.xlsx')}catch(e){}
 })();
 </script>
