@@ -241,6 +241,9 @@ tr.sel td{background:#fff8d6!important}
     <input type="search" id="qd" placeholder="Buscar por ID, problem solver ou motivo..." style="flex:1;min-width:200px">
     <select id="sfd"><option value="">Todos os estados</option><option>Pendente</option><option>Encerrado</option><option>Cancelada</option></select>
     <select id="sfmd"><option value="">Todos os motivos</option></select>
+    <label style="font-size:.85rem;color:var(--mut)">De <select id="dde"></select></label>
+    <label style="font-size:.85rem;color:var(--mut)">Até <select id="dat"></select></label>
+    <button class="btn" id="dlimp" type="button">Limpar datas</button>
     <label class="btn p" style="display:inline-block">Carregar arquivo<input type="file" id="filed" accept=".csv,.xlsx,.xls" hidden></label>
   </div>
   <p id="drmsg" role="status"></p>
@@ -763,13 +766,31 @@ function carregarDesc(buf,name){
     DESC=d.rows;DESCDUP=d.dup;DESCSRC=name;SELD.clear();
     const ms=[...new Set(DESC.map(x=>x.motivo))].sort();
     $('#sfmd').innerHTML='<option value="">Todos os motivos</option>'+ms.map(x=>`<option>${esc(x)}</option>`).join('');
-    descRender();abaTrocar('desc');
+    montaDias();descRender();abaTrocar('desc');
   }catch(e){alert('Não consegui ler o arquivo: '+e.message)}
 }
 const descLista=()=>{const r=new Set(REATD.map(x=>x.id));return DESC.filter(x=>!r.has(x.id))};
+const MES={jan:1,fev:2,mar:3,abr:4,mai:5,jun:6,jul:7,ago:8,set:9,out:10,nov:11,dez:12};
+let DIAS=[];
+function chave(d,wrap){const m=String(d).split('/'),mm=MES[(m[1]||'').slice(0,3).toLowerCase()]||0;return(wrap&&mm<=3?mm+12:mm)*100+(+m[0]||0)}
+function montaDias(){
+  const u=[...new Set(DESC.map(x=>x.dia).filter(x=>x&&x!=='-'))];
+  const ms=u.map(d=>chave(d)),wrap=ms.some(k=>k>=1000)&&ms.some(k=>k<400);
+  DIAS=u.sort((a,b)=>chave(a,wrap)-chave(b,wrap));
+  const o=DIAS.map(d=>`<option>${esc(d)}</option>`).join('');
+  $('#dde').innerHTML='<option value="">Início</option>'+o;
+  $('#dat').innerHTML='<option value="">Hoje/fim</option>'+o;
+}
+function descPer(){
+  const a=DIAS.indexOf($('#dde').value),b=DIAS.indexOf($('#dat').value);
+  if(a<0&&b<0)return DESC;
+  const lo=Math.min(a<0?0:a,b<0?DIAS.length-1:b),hi=Math.max(a<0?0:a,b<0?DIAS.length-1:b);
+  const ok=new Set(DIAS.slice(lo,hi+1));return DESC.filter(x=>ok.has(x.dia));
+}
 function visDesc(){
   const q=$('#qd').value.toLowerCase(),e=$('#sfd').value,m=$('#sfmd').value;
-  return descLista().filter(x=>(!e||x.estado===e)&&(!m||x.motivo===m)&&(x.id+' '+x.solver+' '+x.motivo).toLowerCase().includes(q));
+  const per=new Set(descPer().map(x=>x.id));
+  return descLista().filter(x=>per.has(x.id)&&(!e||x.estado===e)&&(!m||x.motivo===m)&&(x.id+' '+x.solver+' '+x.motivo).toLowerCase().includes(q));
 }
 function descSelUi(){
   const a=visDesc().slice(0,2000);
@@ -793,18 +814,18 @@ function tabelaReatD(){
   descSelUi();
 }
 function descRender(){
-  const L=descLista();
-  $('#tbnd').textContent=DESC.length;
+  const B=descPer(),r0=new Set(REATD.map(x=>x.id)),L=B.filter(x=>!r0.has(x.id));
+  $('#tbnd').textContent=DESC.length;const filt=B.length!==DESC.length;
   $('#dmsg').textContent=DESC.length?`Fonte: ${DESCSRC}. ${DESCDUP?DESCDUP+' linha(s) com ID repetido contada(s) uma vez (mantida a mais recente). ':''}O filtro de ciclo não vale para esta aba.`:'Nenhum arquivo carregado. Use "Carregar arquivo" (CSV do problem solving) ou Menu > Carregar planilha.';
-  $('#d1').textContent=DESC.length;$('#d1s').textContent=DESC.length?`${DESCDUP} repetidos ignorados`:'';
+  $('#d1').textContent=B.length;$('#d1s').textContent=DESC.length?`${DESCDUP} repetidos ignorados`:'';
   $('#d2').textContent=L.length;$('#d3').textContent=REATD.length;
-  $('#d4').textContent=DESC.filter(x=>x.estado==='Pendente').length;
-  const S=cnt(DESC,'solver'),t=S[0]||['-',0];
-  $('#d5').textContent=t[0];$('#d5s').textContent=DESC.length?`${t[1]} pacotes (${Math.round(t[1]/DESC.length*100)}%)`:'';
-  const D=[];DESC.forEach(x=>{let e=D.find(y=>y[0]===x.dia);if(!e)D.push(e=[x.dia,0]);e[1]++});D.reverse();
-  mk('c21',hbar(cnt(DESC,'motivo'),PAL[3]));
+  $('#d4').textContent=B.filter(x=>x.estado==='Pendente').length;
+  const S=cnt(B,'solver'),t=S[0]||['-',0];
+  $('#d5').textContent=t[0];$('#d5s').textContent=B.length?`${t[1]} pacotes (${Math.round(t[1]/B.length*100)}%)`:'';
+  const D=[];B.forEach(x=>{let e=D.find(y=>y[0]===x.dia);if(!e)D.push(e=[x.dia,0]);e[1]++});D.reverse();
+  mk('c21',hbar(cnt(B,'motivo'),PAL[3]));
   mk('c22',hbar(S.slice(0,12),PAL[0]));
-  const E=cnt(DESC,'estado');
+  const E=cnt(B,'estado');
   mk('c23',{type:'doughnut',data:{labels:E.map(x=>`${x[0]} (${x[1]})`),datasets:[{data:E.map(x=>x[1]),backgroundColor:PAL}]},options:{plugins:{legend:{position:'right'}}}});
   mk('c24',{type:'bar',data:{labels:D.map(x=>x[0]),datasets:[{data:D.map(x=>x[1]),backgroundColor:PAL[1],borderRadius:4}]},options:{plugins:{legend:{display:false}},layout:{padding:{top:18}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
   tabelaDesc();tabelaReatD();
@@ -829,6 +850,7 @@ $('#drvb').onclick=()=>{
   const n=SELDR.size;REATD=REATD.filter(x=>!SELDR.has(x.id));SELDR.clear();saveReatD();descRender();
   dmsg(`${n} ID${n===1?'':'s'} devolvido${n===1?'':'s'} para a lista.`,'ok');
 };
+$('#dde').onchange=$('#dat').onchange=descRender;$('#dlimp').onclick=()=>{$('#dde').value='';$('#dat').value='';descRender()};
 $('#qd').oninput=tabelaDesc;$('#sfd').onchange=tabelaDesc;$('#sfmd').onchange=tabelaDesc;
 $('#filed').onchange=e=>{const f=e.target.files[0];if(f)f.arrayBuffer().then(b=>carregarDesc(b,f.name));e.target.value=''};
 
