@@ -100,6 +100,7 @@ tr.sel td{background:#fff8d6!important}
         <button class="mi" id="pdf">Baixar relatório PDF</button>
         <button class="mi" id="xls">Exportar relatório em Excel</button>
         <label class="mi">Carregar planilha<input type="file" id="file" accept=".xlsx,.xls,.csv" hidden></label>
+        <button class="mi" id="limpa" style="color:#c62828;border-top:1px solid var(--line);border-radius:0 0 8px 8px;margin-top:4px">Limpar dados</button>
       </div>
     </div>
   </div>
@@ -985,6 +986,22 @@ function exportarExcelDesc(){
 }
 $('#dpdf').onclick=()=>{if(!DESC.length)return alert('Carregue o arquivo do Desconteinerizado primeiro.');gerarPDFDesc()};
 $('#dxls').onclick=()=>{if(!DESC.length)return alert('Carregue o arquivo do Desconteinerizado primeiro.');exportarExcelDesc()};
+
+function limparTudo(){
+  if(!confirm('Limpar TODOS os dados de TODAS as abas?\n\nIsso apaga: planilha carregada, IDs bipados, Sistêmica, Físico, Desconteinerizado e as listas de Reatribuição.\nBaixe os relatórios antes. Não dá para desfazer.'))return;
+  DATA={ret:[],mais:[],mov:[],aud:[],audDup:0};SRC='nenhuma planilha carregada';AUDSRC='';
+  BIP=[];saveBip();REAT=[];saveReat();REATD=[];saveReatD();
+  DESC=[];DESCDUP=0;DESCSRC='';DIAS=[];
+  [SELS,SELR,SELD,SELDR].forEach(s=>s.clear());
+  SCIC='';DPER=0;DCIC='';CMAP=new Map();
+  ['#q','#qf','#qa','#qp','#qy','#qd'].forEach(i=>{const e=$(i);if(e)e.value=''});
+  ['#sfe','#sfd'].forEach(i=>{const e=$(i);if(e)e.value=''});
+  $('#sfmd').innerHTML='<option value="">Todos os motivos</option>';
+  $('#dde').innerHTML='<option value="">Início</option>';$('#dat').innerHTML='<option value="">Hoje/fim</option>';
+  $('#fc').value='';refreshFc();render();descRender();abaTrocar('geral');
+  $('#mnl').hidden=true;$('#mnb').setAttribute('aria-expanded','false');
+}
+$('#limpa').onclick=limparTudo;
 function reatdFiltrado(){return REATD.filter(x=>(!DPER||!x.dia||noPeriodo(x.dia,DPER))&&(!DCIC||!x.cic||x.cic===DCIC))}
 function reatFiltrado(){return REAT.filter(x=>!SCIC||cicloRota(x.rota)===SCIC)}
 function filtrosAtivos(){
