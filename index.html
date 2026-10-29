@@ -88,6 +88,21 @@ tr.sel td{background:#fff8d6!important}
 .chip small{opacity:.75;margin-left:5px;font-size:.78rem}
 .fl{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;flex-basis:100%}
 .fl .lb{font-size:.8rem;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.04em;min-width:64px}
+.fcard{margin-bottom:14px;padding:14px 16px;display:grid;gap:12px}
+.fr{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fr.sep{padding-top:12px;border-top:1px solid var(--line)}
+.fr .sp{margin-left:auto}
+.fr input[type=search]{flex:1;min-width:220px}
+.fcard .fl{display:grid;grid-template-columns:70px 1fr;gap:6px 10px;align-items:center}
+.fcard .fl .lb{font-size:.72rem;min-width:0}
+.fcard .chip{font-size:.8rem;padding:5px 6px 5px 12px;display:inline-flex;align-items:center;gap:7px}
+.fcard .chip small{margin:0;opacity:1;background:rgba(45,50,119,.1);color:var(--pri);border-radius:999px;padding:1px 8px;font-size:.72rem;min-width:22px;text-align:center}
+.fcard .chip[aria-pressed=true] small{background:rgba(255,255,255,.22);color:#fff}
+.dts{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+.dts select{min-width:112px;text-transform:none;letter-spacing:0;font-weight:500;padding:7px 10px}
+.btn.g{background:transparent;border-color:transparent;color:var(--mut);padding:7px 8px}
+.btn.g:hover{background:#eef0fa;filter:none}
+@media(max-width:560px){.fcard .fl{grid-template-columns:1fr}.fr .sp{margin-left:0}}
 </style>
 </head>
 <body>
@@ -213,9 +228,11 @@ tr.sel td{background:#fff8d6!important}
     <div class="card"><h2>Sistêmica por rep auditoria (top 12)</h2><div class="ch"><canvas id="c17"></canvas></div></div>
     <div class="card"><h2>Sistêmica por hora da auditoria</h2><div class="ch"><canvas id="c18"></canvas></div></div>
   </section>
-  <div class="card" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px">
-    <input type="search" id="qy" placeholder="Buscar por ID, placa, rota ou rep..." style="flex:1;min-width:200px">
-    <select id="sfe"><option value="">Todos os estados</option><option>Correto</option><option>À mais</option><option>Faltante</option></select>
+  <div class="card fcard">
+    <div class="fr">
+      <input type="search" id="qy" placeholder="Buscar por ID, placa, rota ou rep...">
+      <select id="sfe"><option value="">Todos os estados</option><option>Correto</option><option>À mais</option><option>Faltante</option></select>
+    </div>
     <div class="fl"><span class="lb">Ciclo</span><div class="chips" id="chs"></div></div>
   </div>
   <p id="rmsg" role="status"></p>
@@ -249,14 +266,17 @@ tr.sel td{background:#fff8d6!important}
     <div class="card"><h2>Por estado</h2><div class="ch"><canvas id="c23"></canvas></div></div>
     <div class="card"><h2>Por dia de criação</h2><div class="ch"><canvas id="c24"></canvas></div></div>
   </section>
-  <div class="card" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
-    <input type="search" id="qd" placeholder="Buscar por ID, problem solver ou motivo..." style="flex:1;min-width:200px">
-    <select id="sfd"><option value="">Todos os estados</option><option>Pendente</option><option>Encerrado</option><option>Cancelada</option></select>
-    <select id="sfmd"><option value="">Todos os motivos</option></select>
-    <label style="font-size:.85rem;color:var(--mut)">De <select id="dde"></select></label>
-    <label style="font-size:.85rem;color:var(--mut)">Até <select id="dat"></select></label>
-    <button class="btn" id="dlimp" type="button">Limpar datas</button>
-    <label class="btn p" style="display:inline-block">Carregar arquivo<input type="file" id="filed" accept=".csv,.xlsx,.xls" hidden></label>
+  <div class="card fcard">
+    <div class="fr">
+      <input type="search" id="qd" placeholder="Buscar por ID, problem solver ou motivo...">
+      <select id="sfd"><option value="">Todos os estados</option><option>Pendente</option><option>Encerrado</option><option>Cancelada</option></select>
+      <select id="sfmd"><option value="">Todos os motivos</option></select>
+      <label class="btn p sp" style="display:inline-block">Carregar arquivo<input type="file" id="filed" accept=".csv,.xlsx,.xls" hidden></label>
+    </div>
+    <div class="fr sep">
+      <span class="dts">Datas <select id="dde" aria-label="De"></select> até <select id="dat" aria-label="Até"></select></span>
+      <button class="btn g" id="dlimp" type="button">Limpar datas</button>
+    </div>
     <div class="fl"><span class="lb">Período</span><div class="chips" id="chp"></div></div>
     <div class="fl"><span class="lb">Ciclo</span><div class="chips" id="chd"></div></div>
   </div>
