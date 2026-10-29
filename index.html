@@ -79,6 +79,13 @@ tr.sel td{background:#fff8d6!important}
 #t10 tr,#t11 tr{cursor:pointer}
 #dmsg,#drmsg{font-size:.85rem;min-height:1.2em;margin:0 0 10px;color:var(--mut)}
 #drmsg.ok{color:#00864a}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.chip{font:inherit;font-size:.85rem;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:6px 13px;cursor:pointer}
+.chip:hover{background:#eef0fa}
+.chip[aria-pressed=true]{background:var(--pri);color:#fff;border-color:var(--pri)}
+.chip small{opacity:.75;margin-left:5px;font-size:.78rem}
+.fl{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;flex-basis:100%}
+.fl .lb{font-size:.8rem;color:var(--mut);font-weight:700;text-transform:uppercase;letter-spacing:.04em;min-width:64px}
 </style>
 </head>
 <body>
@@ -206,6 +213,7 @@ tr.sel td{background:#fff8d6!important}
   <div class="card" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px">
     <input type="search" id="qy" placeholder="Buscar por ID, placa, rota ou rep..." style="flex:1;min-width:200px">
     <select id="sfe"><option value="">Todos os estados</option><option>Correto</option><option>À mais</option><option>Faltante</option></select>
+    <div class="fl"><span class="lb">Ciclo</span><div class="chips" id="chs"></div></div>
   </div>
   <p id="rmsg" role="status"></p>
   <section class="g2">
@@ -224,6 +232,7 @@ tr.sel td{background:#fff8d6!important}
 
  <div class="pane" id="pd" hidden>
   <p id="dmsg"></p>
+  <div class="chips" style="margin:0 0 10px"><button class="btn p" id="dpdf" type="button">Baixar relatório PDF</button><button class="btn" id="dxls" type="button">Exportar relatório em Excel</button><span style="font-size:.82rem;color:var(--mut)">Os relatórios seguem os filtros de Período, Ciclo e demais filtros desta aba.</span></div>
   <section class="kpis">
     <div class="card kpi"><span>Total desconteinerizado</span><b id="d1">0</b><i id="d1s"></i></div>
     <div class="card kpi"><span>Na lista</span><b id="d2">0</b><i>Ainda não reatribuídos</i></div>
@@ -245,6 +254,8 @@ tr.sel td{background:#fff8d6!important}
     <label style="font-size:.85rem;color:var(--mut)">Até <select id="dat"></select></label>
     <button class="btn" id="dlimp" type="button">Limpar datas</button>
     <label class="btn p" style="display:inline-block">Carregar arquivo<input type="file" id="filed" accept=".csv,.xlsx,.xls" hidden></label>
+    <div class="fl"><span class="lb">Período</span><div class="chips" id="chp"></div></div>
+    <div class="fl"><span class="lb">Ciclo</span><div class="chips" id="chd"></div></div>
   </div>
   <p id="drmsg" role="status"></p>
   <section class="g2">
@@ -290,6 +301,7 @@ tr.sel td{background:#fff8d6!important}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 const $=s=>document.querySelector(s);
+let SCIC='',DPER=0,DCIC='',CMAP=new Map();
 const PAL=['#2d3277','#f5b800','#00a650','#e53935','#6c7ae0','#8d6e63'];
 let DATA={ret:[],mais:[],mov:[],aud:[],audDup:0}, SRC='nenhuma planilha carregada', AUDSRC='', charts={};
 
@@ -459,9 +471,10 @@ function tabelaFis(){
   const sf=$('#sfp').value,a=CUR.fis.filter(x=>(!sf||x.sit===sf)&&(x.id+' '+x.placa+' '+x.rota+' '+x.rep+' '+x.resp).toLowerCase().includes(q));
   $('#t8').innerHTML=a.map(x=>`<tr><td>${x.id}</td><td>${esc(x.st)}</td><td>${esc(x.estado)}</td><td><b style="color:${x.sit==='Confere'?'#00864a':'#b8860b'}">${x.sit}</b></td><td>${esc(x.res)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.resp)}</td><td>${esc(x.transp)}</td><td>${esc(x.ciclo)}</td></tr>`).join('')||'<tr><td colspan="11">Nenhum ID repetido</td></tr>';
 }
-function visSis(){
+function visSis(){return sisFiltrado().slice(0,2000)}
+function sisFiltrado(){
   const q=$('#qy').value.toLowerCase(),e=$('#sfe').value;
-  return CUR.sis.filter(x=>(!e||x.estado===e)&&(x.id+' '+x.placa+' '+x.rota+' '+x.rep).toLowerCase().includes(q)).slice(0,2000);
+  return CUR.sis.filter(x=>(!e||x.estado===e)&&(!SCIC||cicloRota(x.rota)===SCIC)&&(x.id+' '+x.placa+' '+x.rota+' '+x.rep).toLowerCase().includes(q));
 }
 function tabelaSist(){
   const a=visSis();
@@ -487,7 +500,7 @@ function analise(){
   const S=cnt(fis,'st');
   mk('c19',{type:'doughnut',data:{labels:S.map(x=>`${x[0]} (${x[1]})`),datasets:[{data:S.map(x=>x[1]),backgroundColor:PAL}]},options:{plugins:{legend:{position:'right'}}}});
   mk('c20',hbar(cnt(fis,'estado'),PAL[3]));
-  tabelaFis();tabelaSist();tabelaReat();$('#y6').textContent=REAT.length;
+  chipsSis();tabelaFis();tabelaSist();tabelaReat();$('#y6').textContent=REAT.length;
 }
 
 /* ---------- transportadora ---------- */
@@ -559,6 +572,17 @@ function gerarPDF(){
   y=tbl(d,y,'Pacotes à mais',['ID','Responsável LOG','Ciclo'],v.mais.map(x=>[x.id,x.resp,x.ciclo]),[38,106,38]);
   y=tbl(d,y,'Pacotes faltantes',['ID','Responsável LOG','Transportadora','Ciclo'],v.falt.map(x=>[x.id,x.resp,x.transp,x.ciclo]),[38,60,56,28]);
   y=tbl(d,y,'Pacotes com avaria',['ID','Responsável LOG','Transportadora','Ciclo'],v.avar.map(x=>[x.id,x.resp,x.transp,x.ciclo]),[38,60,56,28]);
+  const fa=filtrosAtivos(),ft=n=>{const f=fa.find(z=>z[0]===n);return f?' ['+f[1]+']':''},cut=(t,n)=>{t=String(t==null?'':t);return t.length>n?t.slice(0,n-1)+'.':t},LIM=400;
+  if((DATA.aud||[]).length){
+    const S=sisFiltrado();
+    y=tbl(d,y,'Sistêmica'+ft('Sistêmica')+' - '+S.length+' ID'+(S.length===1?'':'s'),['ID','Estado','Placa','Rota','Rep auditoria'],S.slice(0,LIM).map(x=>[x.id,x.estado,cut(x.placa,12),cut(x.rota,22),cut(x.rep,26)]),[34,22,28,48,50]);
+    if(S.length>LIM){d.setFontSize(9);d.setTextColor(90);d.text('Mostrando '+LIM+' de '+S.length+'. A lista completa está no Excel.',M,y-6)}
+  }
+  if(DESC.length){
+    const Q=visDesc();
+    y=tbl(d,y,'Desconteinerizado'+ft('Desconteinerizado')+' - '+Q.length+' ID'+(Q.length===1?'':'s'),['ID do pacote','Estado','Problem solver','Dia','Motivo'],Q.slice(0,LIM).map(x=>[x.id,x.estado,cut(x.solver,26),x.dia,cut(x.motivo,26)]),[34,24,56,18,50]);
+    if(Q.length>LIM){d.setFontSize(9);d.setTextColor(90);d.text('Mostrando '+LIM+' de '+Q.length+'. A lista completa está no Excel.',M,y-6)}
+  }
   // rodapé
   const n=d.getNumberOfPages();
   for(let i=1;i<=n;i++){d.setPage(i);d.setFontSize(8);d.setTextColor(140);d.text(`Página ${i} de ${n}  |  Fonte: ${SRC}`,M,291)}
@@ -662,19 +686,22 @@ $('#bclr').onclick=()=>{
 /* ---------- exportar relatório em Excel ---------- */
 const XHR=['ID','MELI responsável','Motivo','Transportadora','Ciclo','Bipado em'];
 const XHM=['ID','LOG responsável','Transportadora','Ciclo','Bipado em'];
+const BF=()=>{const c=$('#fc').value;return c?BIP.filter(x=>x.ciclo===c):BIP};
 function excelRows(){
   const ord=(a,b)=>String(a.ciclo).localeCompare(String(b.ciclo))||String(a.at).localeCompare(String(b.at));
   const hora=horaFmt;
-  const ret=BIP.filter(x=>x.status==='Retirado').sort(ord).map(x=>[String(x.id),x.resp||'',x.motivo||'',x.transp||NI,x.ciclo||'',hora(x)]);
-  const mais=BIP.filter(x=>x.status==='À mais').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x)]);
-  const falt=BIP.filter(x=>x.status==='Faltante').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x)]);
-  const avar=BIP.filter(x=>x.status==='Avaria').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x)]);
+  const ret=BF().filter(x=>x.status==='Retirado').sort(ord).map(x=>[String(x.id),x.resp||'',x.motivo||'',x.transp||NI,x.ciclo||'',hora(x)]);
+  const mais=BF().filter(x=>x.status==='À mais').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x)]);
+  const falt=BF().filter(x=>x.status==='Faltante').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x)]);
+  const avar=BF().filter(x=>x.status==='Avaria').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x)]);
   return{ret,mais,falt,avar};
 }
 function exportarExcel(){
   const{ret,mais,falt,avar}=excelRows();
   const folha=(h,rows,w)=>{const s=XLSX.utils.aoa_to_sheet([h,...rows]);s['!cols']=w.map(wch=>({wch}));return s};
   const wb=XLSX.utils.book_new();
+  const fa=filtrosAtivos();
+  if(fa.length)XLSX.utils.book_append_sheet(wb,folha(['Onde','Filtro aplicado'],fa,[48,70]),'Filtros aplicados');
   const au=DATA.aud||[],cz=cruzar(),nE=e=>au.filter(x=>x.estado===e).length;
   if(au.length){
     const R=[['Resumo da comparação'],[],['Planilha de auditoria',AUDSRC],['Total de IDs na planilha',au.length],['   Corretos',nE('Correto')],['   À mais',nE('À mais')],['   Faltantes',nE('Faltante')],['IDs duplicados na planilha (contados uma vez)',DATA.audDup||0],[],['Repetidos: estão na planilha e foram bipados (aba Físico)',cz.fis.length],['   Confere (status bipado igual ao estado da planilha)',cz.fis.filter(x=>x.sit==='Confere').length],['   Revisar (status bipado diferente do estado)',cz.fis.filter(x=>x.sit==='Revisar').length],['Só na planilha, não bipados (aba Sistêmica)',cz.sis.length],[],['Como a comparação funciona'],['O número do ID de cada linha da planilha é procurado entre os IDs bipados (Retirado, À mais, Avaria, Faltante) e os retirados/à mais da planilha principal.'],['Se o ID aparece nos dois lugares, ele vai para a aba Físico. Se aparece só na planilha, fica na aba Sistêmica.'],['Situação Confere: status bipado igual ao estado da planilha. Situação Revisar: são diferentes; veja a coluna Resultado.']];
@@ -686,11 +713,11 @@ function exportarExcel(){
   XLSX.utils.book_append_sheet(wb,folha(XHM,avar,[16,30,22,10,20]),'Avarias');
   if(au.length){
     XLSX.utils.book_append_sheet(wb,folha(['ID','Status bipado','Estado na planilha','Situação','Resultado','Placa','Rota','Rep auditoria','Responsável','Transportadora','Ciclo','Data auditoria'],cz.fis.map(x=>[x.id,x.st,x.estado,x.sit,x.res,x.placa,x.rota,x.rep,x.resp,x.transp,x.ciclo,x.data]),[14,14,18,11,62,12,24,34,24,20,8,20]),'Físico');
-    XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria'],cz.sis.map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data]),[14,10,56,12,24,34,20]),'Sistêmica');
+    XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria'],sisFiltrado().map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data]),[14,10,56,12,24,34,20]),'Sistêmica');
   }
-  if(REAT.length)XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria','Movido em'],REAT.map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data,horaFmt({at:x.at})]),[14,10,56,12,24,34,20,20]),'Pacotes movimentados');
-  if(DESC.length)XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Criação','Motivo da exclusão'],descLista().map(x=>[x.id,x.estado,x.solver,x.data,x.motivo]),[16,12,34,20,26]),'Desconteinerizado');
-  if(REATD.length)XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Motivo da exclusão','Criação','Movido em'],REATD.map(x=>[x.id,x.estado,x.solver,x.motivo,x.data,horaFmt({at:x.at})]),[16,12,34,26,20,20]),'Reatribuição');
+  if(REAT.length)XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria','Movido em'],reatFiltrado().map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data,horaFmt({at:x.at})]),[14,10,56,12,24,34,20,20]),'Pacotes movimentados');
+  if(DESC.length)XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Criação','Motivo da exclusão'],visDesc().map(x=>[x.id,x.estado,x.solver,x.data,x.motivo]),[16,12,34,20,26]),'Desconteinerizado');
+  if(REATD.length)XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Motivo da exclusão','Criação','Movido em'],reatdFiltrado().map(x=>[x.id,x.estado,x.solver,x.motivo,x.data,horaFmt({at:x.at})]),[16,12,34,26,20,20]),'Reatribuição');
   XLSX.writeFile(wb,'relatorio-pcts-'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 $('#xls').onclick=exportarExcel;$('#bxl').onclick=exportarExcel;
@@ -742,13 +769,13 @@ function parseDesc(rows){
   const hi=rows.findIndex(r=>r.some(c=>/^ID DO PACOTE$/.test(String(c).trim().toUpperCase())));
   if(hi<0)return null;
   const h=rows[hi].map(c=>String(c).trim().toUpperCase()),f=re=>h.findIndex(v=>re.test(v));
-  const ci=f(/^ID DO PACOTE$/),ei=f(/^ESTADO$/),si=f(/PROBLEM SOLVER/),di=f(/CRIA/),mi=f(/EXCLUS/),li=f(/LINK/),pi=f(/^PROBLEMA$/);
+  const ci=f(/^ID DO PACOTE$/),ei=f(/^ESTADO$/),si=f(/PROBLEM SOLVER/),di=f(/CRIA/),mi=f(/EXCLUS/),li=f(/LINK/),pi=f(/^PROBLEMA$/),ri=f(/CICLO|ROTA/);
   const M=new Map();let dup=0;
   for(const r of rows.slice(hi+1)){
     const m=String(r[ci]??'').match(/\d{8,}/);if(!m)continue;
     if(M.has(m[0])){dup++;continue}
     const dt=String(r[di]??'').trim(),dm=dt.match(/\|\s*(\d{1,2}\/\w+)/);
-    M.set(m[0],{id:m[0],estado:cap(String(r[ei]??'').trim())||'Sem estado',solver:nome(r[si]),data:dt,dia:dm?dm[1]:'-',motivo:cap(String(r[mi]??'').trim())||'Não informado',link:String(r[li]??'').trim(),prob:String(r[pi]??'').trim()});
+    M.set(m[0],{id:m[0],estado:cap(String(r[ei]??'').trim())||'Sem estado',solver:nome(r[si]),data:dt,dia:dm?dm[1]:'-',motivo:cap(String(r[mi]??'').trim())||'Não informado',link:String(r[li]??'').trim(),prob:String(r[pi]??'').trim(),cic:ri>=0?cicloTxt(r[ri]):''});
   }
   return{rows:[...M.values()],dup};
 }
@@ -781,11 +808,16 @@ function montaDias(){
   $('#dde').innerHTML='<option value="">Início</option>'+o;
   $('#dat').innerHTML='<option value="">Hoje/fim</option>'+o;
 }
-function descPer(){
+function descPer(skipC){
   const a=DIAS.indexOf($('#dde').value),b=DIAS.indexOf($('#dat').value);
-  if(a<0&&b<0)return DESC;
-  const lo=Math.min(a<0?0:a,b<0?DIAS.length-1:b),hi=Math.max(a<0?0:a,b<0?DIAS.length-1:b);
-  const ok=new Set(DIAS.slice(lo,hi+1));return DESC.filter(x=>ok.has(x.dia));
+  let L=DESC;
+  if(a>=0||b>=0){
+    const lo=Math.min(a<0?0:a,b<0?DIAS.length-1:b),hi=Math.max(a<0?0:a,b<0?DIAS.length-1:b);
+    const ok=new Set(DIAS.slice(lo,hi+1));L=L.filter(x=>ok.has(x.dia));
+  }
+  if(DPER)L=L.filter(x=>noPeriodo(x.dia,DPER));
+  if(!skipC&&DCIC)L=L.filter(x=>descCiclo(x)===DCIC);
+  return L;
 }
 function visDesc(){
   const q=$('#qd').value.toLowerCase(),e=$('#sfd').value,m=$('#sfmd').value;
@@ -814,9 +846,10 @@ function tabelaReatD(){
   descSelUi();
 }
 function descRender(){
+  chipsDesc();
   const B=descPer(),r0=new Set(REATD.map(x=>x.id)),L=B.filter(x=>!r0.has(x.id));
   $('#tbnd').textContent=DESC.length;const filt=B.length!==DESC.length;
-  $('#dmsg').textContent=DESC.length?`Fonte: ${DESCSRC}. ${DESCDUP?DESCDUP+' linha(s) com ID repetido contada(s) uma vez (mantida a mais recente). ':''}O filtro de ciclo não vale para esta aba.`:'Nenhum arquivo carregado. Use "Carregar arquivo" (CSV do problem solving) ou Menu > Carregar planilha.';
+  $('#dmsg').textContent=DESC.length?`Fonte: ${DESCSRC}. ${DESCDUP?DESCDUP+' linha(s) com ID repetido contada(s) uma vez (mantida a mais recente). ':''}O filtro de ciclo do topo não vale para esta aba; use Período e Ciclo aqui.`:'Nenhum arquivo carregado. Use "Carregar arquivo" (CSV do problem solving) ou Menu > Carregar planilha.';
   $('#d1').textContent=B.length;$('#d1s').textContent=DESC.length?`${DESCDUP} repetidos ignorados`:'';
   $('#d2').textContent=L.length;$('#d3').textContent=REATD.length;
   $('#d4').textContent=B.filter(x=>x.estado==='Pendente').length;
@@ -842,7 +875,7 @@ $('#dsela').onchange=e=>{visDesc().slice(0,2000).forEach(x=>e.target.checked?SEL
 $('#drsela').onchange=e=>{REATD.forEach(x=>e.target.checked?SELDR.add(x.id):SELDR.delete(x.id));tabelaReatD()};
 $('#dmvb').onclick=()=>{
   const now=new Date().toISOString();let n=0;
-  DESC.filter(x=>SELD.has(x.id)).forEach(x=>{if(!REATD.some(r=>r.id===x.id)){REATD.push({id:x.id,estado:x.estado,solver:x.solver,motivo:x.motivo,data:x.data,at:now});n++}});
+  DESC.filter(x=>SELD.has(x.id)).forEach(x=>{if(!REATD.some(r=>r.id===x.id)){REATD.push({id:x.id,estado:x.estado,solver:x.solver,motivo:x.motivo,data:x.data,dia:x.dia,cic:descCiclo(x),at:now});n++}});
   SELD.clear();saveReatD();descRender();
   dmsg(`${n} ID${n===1?'':'s'} movido${n===1?'':'s'} para Reatribuição.`,'ok');
 };
@@ -851,9 +884,119 @@ $('#drvb').onclick=()=>{
   dmsg(`${n} ID${n===1?'':'s'} devolvido${n===1?'':'s'} para a lista.`,'ok');
 };
 $('#dde').onchange=$('#dat').onchange=descRender;$('#dlimp').onclick=()=>{$('#dde').value='';$('#dat').value='';descRender()};
+chipsDesc();
 $('#qd').oninput=tabelaDesc;$('#sfd').onchange=tabelaDesc;$('#sfmd').onchange=tabelaDesc;
 $('#filed').onchange=e=>{const f=e.target.files[0];if(f)f.arrayBuffer().then(b=>carregarDesc(b,f.name));e.target.value=''};
 
+/* ---------- filtros: ciclo (Sistêmica e Desconteinerizado) e período (Desconteinerizado) ---------- */
+function chip(v,l,n,on){return `<button type="button" class="chip" data-v="${esc(v)}" aria-pressed="${on}">${esc(l)}<small>${n}</small></button>`}
+function cicloTxt(t){const m=String(t||'').match(/_([A-Z]+\d*)\s*(\||$)/i);return m?m[1].toUpperCase():(String(t||'').trim().toUpperCase().match(/^[A-Z]+\d*$/)?String(t).trim().toUpperCase():'')}
+function cicloRota(r){return cicloTxt(r)||'Sem ciclo'}
+function chipsSis(){
+  const c={};CUR.sis.forEach(x=>{const k=cicloRota(x.rota);c[k]=(c[k]||0)+1});
+  const ks=Object.keys(c).sort((a,b)=>c[b]-c[a]||a.localeCompare(b));
+  if(SCIC&&!c[SCIC])SCIC='';
+  $('#chs').innerHTML=chip('','Todos',CUR.sis.length,!SCIC)+ks.map(k=>chip(k,k,c[k],SCIC===k)).join('');
+}
+$('#chs').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;SCIC=b.dataset.v;SELS.clear();chipsSis();tabelaSist()});
+function hojeD(){const d=new Date();d.setHours(0,0,0,0);return d}
+function diaDate(dia){
+  const m=String(dia).split('/'),mm=MES[(m[1]||'').slice(0,3).toLowerCase()],dd=+m[0];
+  if(!mm||!dd)return null;
+  const h=hojeD();let d=new Date(h.getFullYear(),mm-1,dd);
+  if(d-h>864e5)d=new Date(h.getFullYear()-1,mm-1,dd);
+  return d;
+}
+function noPeriodo(dia,n){const d=diaDate(dia);if(!d)return false;const k=Math.round((hojeD()-d)/864e5);return k>=0&&k<n}
+function descCicloMap(){
+  const m=new Map();
+  [...DATA.ret,...DATA.mais].forEach(x=>{if(x.ciclo&&x.ciclo!=='Sem ciclo')m.set(x.id,x.ciclo)});
+  BIP.forEach(x=>{if(x.ciclo&&x.ciclo!=='Sem ciclo')m.set(x.id,x.ciclo)});
+  (DATA.aud||[]).forEach(x=>{const c=cicloTxt(x.rota);if(c)m.set(x.id,c)});
+  return m;
+}
+function descCiclo(x){return x.cic||CMAP.get(x.id)||'Sem ciclo'}
+function chipsDesc(){
+  CMAP=descCicloMap();
+  const P=[[0,'Todos'],[7,'Últimos 7 dias'],[15,'Últimos 15 dias'],[30,'Últimos 30 dias']];
+  const base=DESC.filter(x=>!DPER||noPeriodo(x.dia,DPER));
+  $('#chp').innerHTML=P.map(([n,l])=>chip(n,l,n?DESC.filter(x=>noPeriodo(x.dia,n)).length:DESC.length,DPER===n)).join('');
+  const c={};descPer(true).forEach(x=>{const k=descCiclo(x);c[k]=(c[k]||0)+1});
+  const ks=Object.keys(c).sort((a,b)=>c[b]-c[a]||a.localeCompare(b));
+  if(DCIC&&!c[DCIC])DCIC='';
+  $('#chd').innerHTML=chip('','Todos',descPer(true).length,!DCIC)+ks.map(k=>chip(k,k,c[k],DCIC===k)).join('');
+}
+$('#chp').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;DPER=+b.dataset.v;SELD.clear();descRender()});
+$('#chd').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;DCIC=b.dataset.v;SELD.clear();descRender()});
+
+
+function descDados(){
+  const B=descPer(),Q=visDesc(),RD=reatdFiltrado(),S=cnt(B,'solver'),Mo=cnt(B,'motivo'),E=cnt(B,'estado');
+  const C={};B.forEach(x=>{const k=descCiclo(x);C[k]=(C[k]||0)+1});
+  const Cl=Object.entries(C).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]));
+  return{B,Q,RD,S,Mo,E,Cl,pend:B.filter(x=>x.estado==='Pendente').length,
+    fa:(filtrosAtivos().find(z=>z[0]==='Desconteinerizado')||['',''])[1]};
+}
+function gerarPDFDesc(){
+  const {jsPDF}=window.jspdf,d=new jsPDF({unit:'mm',format:'a4'}),W=210,M=14,D=descDados();
+  const cut=(t,n)=>{t=String(t==null?'':t);return t.length>n?t.slice(0,n-1)+'.':t},LIM=1000;
+  d.setFillColor(45,50,119);d.rect(0,0,W,30,'F');d.setFillColor(255,230,0);d.rect(0,30,W,1.6,'F');
+  d.setTextColor(255);d.setFont('helvetica','bold');d.setFontSize(18);d.text('Relatório de Desconteinerizado',M,14);
+  d.setFont('helvetica','normal');d.setFontSize(10);
+  d.text('Gerado em '+new Date().toLocaleString('pt-BR'),M,21);
+  d.text('Filtros: '+cut(D.fa||'nenhum (todos os IDs)',95),M,26.5);
+  const T=D.S[0]||['-',0],k=[['Desconteinerizado',D.B.length],['Na lista',D.B.filter(x=>!REATD.some(r=>r.id===x.id)).length],['Reatribuição',D.RD.length],['Pendentes',D.pend],['Maior solver',cut(T[0],14)]];
+  const kw=(W-2*M-12)/5;
+  k.forEach((x,i)=>{const X=M+i*(kw+3);d.setFillColor(244,245,250);d.roundedRect(X,38,kw,20,2,2,'F');
+    d.setTextColor(107,112,144);d.setFontSize(7.5);d.text(x[0].toUpperCase(),X+3,44);
+    d.setTextColor(45,50,119);d.setFont('helvetica','bold');d.setFontSize(i==4?10:18);d.text(String(x[1]),X+3,53);d.setFont('helvetica','normal')});
+  let y=66;const cw=(W-2*M-6)/2,G=[['c21','Por motivo da exclusão'],['c22','Por problem solver (top 12)'],['c23','Por estado'],['c24','Por dia de criação']];
+  G.forEach((g,i)=>{
+    const cv=$('#'+g[0]),h=cw*cv.height/cv.width,X=M+(i%2)*(cw+6);
+    d.setTextColor(30);d.setFont('helvetica','bold');d.setFontSize(10);d.text(g[1],X,y);
+    d.setDrawColor(228,230,240);d.roundedRect(X,y+2,cw,h+2,2,2,'S');
+    d.addImage(cv.toDataURL('image/png',1),'PNG',X+1,y+3,cw-2,h);
+    if(i%2){const p=$('#'+G[i-1][0]);y+=Math.max(h,cw*p.height/p.width)+12}});
+  const p=(a,t)=>t?Math.round(a/t*100):0,Mt=D.Mo[0]||['-',0],n=D.B.length;
+  d.setFont('helvetica','bold');d.setFontSize(12);d.setTextColor(45,50,119);d.text('Destaques',M,y);y+=6;
+  d.setFont('helvetica','normal');d.setFontSize(10);d.setTextColor(30);
+  [`- ${n} pacotes desconteinerizados; ${D.pend} pendentes (${p(D.pend,n)}%).`,
+   `- Maior problem solver: ${T[0]} com ${T[1]} pacotes (${p(T[1],n)}%).`,
+   `- Principal motivo: ${Mt[0]} (${Mt[1]} ocorrências, ${p(Mt[1],n)}%).`,
+   `- Por ciclo: ${D.Cl.map(c=>c[0]+' '+c[1]).join(' | ')||'-'}.`,
+   `- ${D.RD.length} IDs movidos para Reatribuição.`].forEach(s=>{d.text(cut(s,105),M,y);y+=6});
+  d.addPage();y=18;
+  y=tbl(d,y,'Desconteinerizado - '+D.Q.length+' ID'+(D.Q.length===1?'':'s'),['ID do pacote','Estado','Problem solver','Ciclo','Dia','Motivo'],D.Q.slice(0,LIM).map(x=>[x.id,x.estado,cut(x.solver,22),cut(descCiclo(x),9),x.dia,cut(x.motivo,22)]),[32,22,46,18,16,48]);
+  if(D.Q.length>LIM){d.setFontSize(9);d.setTextColor(90);d.text('Mostrando '+LIM+' de '+D.Q.length+'. A lista completa está no Excel.',M,y-6)}
+  if(D.RD.length)y=tbl(d,y,'Reatribuição - '+D.RD.length+' ID'+(D.RD.length===1?'':'s'),['ID do pacote','Estado','Problem solver','Dia','Motivo'],D.RD.slice(0,LIM).map(x=>[x.id,x.estado,cut(x.solver,26),x.dia,cut(x.motivo,26)]),[34,24,56,18,50]);
+  const np=d.getNumberOfPages();
+  for(let i=1;i<=np;i++){d.setPage(i);d.setFontSize(8);d.setTextColor(140);d.text(`Página ${i} de ${np}  |  Fonte: ${DESCSRC||'-'}`,M,291)}
+  d.save('relatorio-desconteinerizado-'+new Date().toISOString().slice(0,10)+'.pdf');
+}
+function exportarExcelDesc(){
+  const D=descDados(),folha=(h,rows,w)=>{const s=XLSX.utils.aoa_to_sheet([h,...rows]);s['!cols']=w.map(wch=>({wch}));return s};
+  const wb=XLSX.utils.book_new(),n=D.B.length,pc=(a)=>n?Math.round(a/n*100)+'%':'0%';
+  XLSX.utils.book_append_sheet(wb,folha(['Onde','Filtro aplicado'],[['Desconteinerizado',D.fa||'nenhum (todos os IDs)']],[24,80]),'Filtros aplicados');
+  const R=[['Resumo do Desconteinerizado'],[],['Fonte',DESCSRC||'-'],['Total (filtros de período e ciclo)',n],['Pendentes',D.pend],['IDs em Reatribuição',D.RD.length],[],['Por ciclo','Pacotes','%'],...D.Cl.map(c=>[c[0],c[1],pc(c[1])]),[],['Por estado','Pacotes','%'],...D.E.map(c=>[c[0],c[1],pc(c[1])]),[],['Por motivo','Pacotes','%'],...D.Mo.map(c=>[c[0],c[1],pc(c[1])]),[],['Por problem solver','Pacotes','%'],...D.S.map(c=>[c[0],c[1],pc(c[1])])];
+  const sr=XLSX.utils.aoa_to_sheet(R);sr['!cols']=[{wch:44},{wch:12},{wch:8}];XLSX.utils.book_append_sheet(wb,sr,'Resumo');
+  XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Ciclo','Criação','Motivo da exclusão'],D.Q.map(x=>[x.id,x.estado,x.solver,descCiclo(x),x.data,x.motivo]),[16,12,34,10,20,26]),'Desconteinerizado');
+  if(D.RD.length)XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Ciclo','Motivo da exclusão','Criação','Movido em'],D.RD.map(x=>[x.id,x.estado,x.solver,x.cic||'',x.motivo,x.data,horaFmt({at:x.at})]),[16,12,34,10,26,20,20]),'Reatribuição');
+  XLSX.writeFile(wb,'relatorio-desconteinerizado-'+new Date().toISOString().slice(0,10)+'.xlsx');
+}
+$('#dpdf').onclick=()=>{if(!DESC.length)return alert('Carregue o arquivo do Desconteinerizado primeiro.');gerarPDFDesc()};
+$('#dxls').onclick=()=>{if(!DESC.length)return alert('Carregue o arquivo do Desconteinerizado primeiro.');exportarExcelDesc()};
+function reatdFiltrado(){return REATD.filter(x=>(!DPER||!x.dia||noPeriodo(x.dia,DPER))&&(!DCIC||!x.cic||x.cic===DCIC))}
+function reatFiltrado(){return REAT.filter(x=>!SCIC||cicloRota(x.rota)===SCIC)}
+function filtrosAtivos(){
+  const L=[],j=a=>a.filter(Boolean).join(', ');
+  const top=$('#fc').value;
+  if(top)L.push(['Ciclo do topo (Retirados, À mais, Faltantes, Avarias)',top]);
+  const se=$('#sfe').value,sq=$('#qy').value.trim();
+  if(SCIC||se||sq)L.push(['Sistêmica',j([SCIC&&'Ciclo '+SCIC,se&&'Estado '+se,sq&&'Busca "'+sq+'"'])]);
+  const de=$('#dde').value,ate=$('#dat').value,ds=$('#sfd').value,dm=$('#sfmd').value,dq=$('#qd').value.trim();
+  if(DPER||DCIC||de||ate||ds||dm||dq)L.push(['Desconteinerizado',j([DPER&&'Últimos '+DPER+' dias',DCIC&&'Ciclo '+DCIC,de&&'De '+de,ate&&'Até '+ate,ds&&'Estado '+ds,dm&&'Motivo '+dm,dq&&'Busca "'+dq+'"'])]);
+  return L;
+}
 /* ---------- abas ---------- */
 function abaTrocar(t){
   $('#pg').hidden=t!=='geral';$('#pf').hidden=t!=='falt';$('#pa').hidden=t!=='avar';$('#pfi').hidden=t!=='fis';$('#psi').hidden=t!=='sist';$('#pd').hidden=t!=='desc';
