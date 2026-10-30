@@ -103,15 +103,46 @@ tr.sel td{background:#fff8d6!important}
 .btn.g{background:transparent;border-color:transparent;color:var(--mut);padding:7px 8px}
 .btn.g:hover{background:#eef0fa;filter:none}
 @media(max-width:560px){.fcard .fl{grid-template-columns:1fr}.fr .sp{margin-left:0}}
+.hbw{display:flex;align-items:center;gap:14px}
+.hb{width:42px;height:42px;border-radius:10px;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.1);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;flex:none;padding:0}
+.hb:hover,.hb:focus-visible{background:rgba(255,255,255,.22);outline:none}
+.hb svg{width:22px;height:22px;stroke:#fff;stroke-width:2.2;stroke-linecap:round;fill:none}
+.tabs{position:fixed;left:0;top:0;bottom:0;width:min(300px,84vw);flex-direction:column;gap:4px;overflow:auto;padding:0 12px 16px;z-index:60;border-right:1px solid var(--line);box-shadow:8px 0 30px rgba(0,0,0,.25);transform:translateX(-104%);visibility:hidden;transition:transform .22s ease,visibility 0s .22s}
+.tabs.open{transform:none;visibility:visible;transition:transform .22s ease}
+.tabs .th{display:flex;align-items:center;justify-content:space-between;margin:0 -12px 10px;padding:16px 18px;background:var(--pri);color:#fff;border-bottom:4px solid var(--acc);font-weight:800}
+.tabs .th button{background:transparent;border:0;color:#fff;font-size:1.5rem;line-height:1;cursor:pointer;padding:0 4px}
+.tabs .tl{font-size:.7rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);padding:10px 8px 4px}
+.tabs .tb{text-align:left;width:100%;padding:12px 14px;font-size:.95rem}
+.tabs .tb.on{box-shadow:inset 4px 0 0 var(--acc)}
+#ov{position:fixed;inset:0;background:rgba(20,22,50,.5);z-index:55}
+#ov[hidden]{display:none}
+.hbw small b{font-weight:700}
+.tabs .ta{font:inherit;font-size:.95rem;font-weight:700;text-align:left;width:100%;border:0;background:transparent;color:var(--ink);border-radius:8px;padding:12px 14px;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.tabs .ta:hover,.tabs .ta:focus-visible{background:#eef0fa;outline:none}
+.tabs .ta i{font-style:normal;color:var(--mut);font-weight:400}
+.tabs .ta.dg{color:#c62828;margin-top:6px;border-top:1px solid var(--line);border-radius:0 0 8px 8px}
+.so{display:grid;gap:6px;margin:6px 0 10px}
+.orow{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;cursor:pointer;background:#fff}
+.orow:hover{background:#f6f7fc}
+.orow.on{border-color:var(--pri);background:#eef0fa}
+.orow input{width:18px;height:18px;accent-color:var(--pri)}
+.orow span b{display:block;font-size:.95rem}
+.orow span small{color:var(--mut);font-size:.78rem}
+.orow em{font-style:normal;font-weight:800;color:var(--pri);font-size:.9rem}
+.orow.all{background:#f4f5fa;font-weight:700}
+.smd{margin:0 0 6px;color:var(--mut);font-size:.88rem}
 </style>
 </head>
 <body>
 <header>
-  <div><h1>PCTS Retirados e à Mais</h1><small>Dashboard operacional</small></div>
+  <div class="hbw">
+    <button class="hb" id="hb" type="button" aria-label="Abrir menu de abas" aria-expanded="false" aria-controls="tabsnav"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+    <div><h1>PCTS Retirados e à Mais</h1><small>Dashboard operacional · <b id="abanome">Visão geral</b></small></div>
+  </div>
   <div class="bar">
     <select id="fc" title="Filtrar por ciclo"></select>
     <button class="btn p" id="bip">Bipar IDs</button>
-    <div class="mn">
+    <div class="mn" hidden>
       <button class="btn" id="mnb" aria-haspopup="true" aria-expanded="false">Menu ▾</button>
       <div class="mnl" id="mnl" hidden>
         <button class="mi" id="pdf">Baixar relatório PDF</button>
@@ -122,13 +153,31 @@ tr.sel td{background:#fff8d6!important}
     </div>
   </div>
 </header>
-<nav class="tabs" role="tablist">
+<div id="ov" hidden></div>
+<div class="ov" id="sm" hidden role="dialog" aria-modal="true" aria-labelledby="smt" style="z-index:70;align-items:center">
+  <div class="md" style="max-width:480px">
+    <div class="mh"><h2 id="smt"></h2><button class="btn" id="smx" type="button">Fechar</button></div>
+    <p class="smd" id="smd"></p>
+    <div class="so" id="smo"></div>
+    <p class="smd" id="smn"></p>
+    <div class="mf"><button class="btn" id="smc" type="button">Cancelar</button><button class="btn p" id="smok" type="button"></button></div>
+  </div>
+</div>
+<input type="file" id="fsel" accept=".xlsx,.xls,.csv" hidden>
+<nav class="tabs" id="tabsnav" role="tablist" aria-label="Abas do Dashboard">
+  <div class="th"><span>Abas</span><button type="button" id="hbx" aria-label="Fechar menu">×</button></div>
   <button class="tb on" id="tbg" role="tab" aria-selected="true" data-tab="geral">Visão geral</button>
+  <div class="tl">Conferência</div>
   <button class="tb" id="tbf" role="tab" aria-selected="false" data-tab="falt">Faltantes (<span id="tbn">0</span>)</button>
   <button class="tb" id="tba" role="tab" aria-selected="false" data-tab="avar">Avarias (<span id="tbna">0</span>)</button>
   <button class="tb" id="tbp" role="tab" aria-selected="false" data-tab="fis">Físico (<span id="tbnp">0</span>)</button>
   <button class="tb" id="tbs" role="tab" aria-selected="false" data-tab="sist">Sistêmica (<span id="tbns">0</span>)</button>
   <button class="tb" id="tbd" role="tab" aria-selected="false" data-tab="desc">Desconteinerizado (<span id="tbnd">0</span>)</button>
+  <div class="tl">Ações</div>
+  <button class="ta" id="acl" type="button">Carregar arquivo <i>›</i></button>
+  <button class="ta" id="ace" type="button">Exportar relatório em Excel <i>›</i></button>
+  <button class="ta" id="acp" type="button">Baixar relatório PDF <i>›</i></button>
+  <button class="ta dg" id="acx" type="button">Limpar dados</button>
 </nav>
 <main>
  <div class="pane" id="pg">
@@ -365,13 +414,15 @@ function parseMov(rows){
   }
   return o;
 }
-function load(buf,name){
+function load(buf,name,kind){kind=kind||'auto';
   try{const wb=/\.csv$/i.test(name||'')?XLSX.read(new TextDecoder('utf-8').decode(buf),{type:'string',raw:true}):XLSX.read(buf,{type:'array'});
     const rd=n=>XLSX.utils.sheet_to_json(wb.Sheets[n],{header:1,defval:''});
-    const dd=parseDesc(rd(wb.SheetNames[0]));
+    const dd=(kind==='auto'||kind==='desc')?parseDesc(rd(wb.SheetNames[0])):null;
     if(dd){carregarDesc(buf,name);return}
-    const au=parseAud(rd(wb.SheetNames[0]));
+    if(kind==='desc')throw new Error('não achei a coluna "ID do pacote". Esse arquivo não parece ser do Desconteinerizado.');
+    const au=(kind==='auto'||kind==='sis')?parseAud(rd(wb.SheetNames[0])):null;
     if(au){DATA={...DATA,aud:au.rows,audDup:au.dup};AUDSRC=name;refreshFc();render();abaTrocar('sist');return}
+    if(kind==='sis')throw new Error('não achei a coluna SHIPMENT. Esse arquivo não parece ser a planilha Sistêmica.');
     const nm=wb.SheetNames.find(n=>/MOVIMENTA/.test(n.toUpperCase()));
     const mov=nm?parseMov(rd(nm)):[];
     let d;
@@ -558,7 +609,8 @@ function tbl(d,y,ttl,head,rows,w){
     let x=M+2;r.forEach((c,i)=>{d.text(String(c),x,y+4.2);x+=w[i]});y+=6});
   return y+10;
 }
-function gerarPDF(){
+function gerarPDF(sel){
+  sel=sel instanceof Set?sel:null;const ok=k=>!sel||sel.has(k);
   const {jsPDF}=window.jspdf,d=new jsPDF({unit:'mm',format:'a4'}),W=210,M=14,v=view();
   const R=cnt(v.ret,'resp'),Mo=cnt(v.ret,'motivo'),L=cnt(v.mais,'resp');
   // cabeçalho
@@ -566,6 +618,8 @@ function gerarPDF(){
   d.setTextColor(255);d.setFont('helvetica','bold');d.setFontSize(18);d.text('Relatório de PCTS Retirados e à Mais',M,14);
   d.setFont('helvetica','normal');d.setFontSize(10);
   d.text('Gerado em '+new Date().toLocaleString('pt-BR')+'  |  Ciclo: '+(v.c||'Todos'),M,22);
+  let y=40;
+  if(ok('geral')){
   // KPIs
   const k=[['Retirados',v.ret.length],['À mais',v.mais.length],['Retirados - à mais',v.ret.length-v.mais.length],['Maior responsável',(R[0]||['-'])[0]]];
   const kw=(W-2*M-9)/4;
@@ -573,7 +627,7 @@ function gerarPDF(){
     d.setTextColor(107,112,144);d.setFontSize(8);d.text(x[0].toUpperCase(),X+3,44);
     d.setTextColor(45,50,119);d.setFont('helvetica','bold');d.setFontSize(i==3?11:18);d.text(String(x[1]),X+3,53);d.setFont('helvetica','normal')});
   // gráficos 2x2
-  let y=66;const cw=(W-2*M-6)/2;
+  y=66;const cw=(W-2*M-6)/2;
   [['c1','Retirados por responsável (MELI)'],['c2','Retirados por motivo'],['c3','À mais por responsável (LOG)'],['c4','Retirados x à mais por ciclo']].forEach((g,i)=>{
     const cv=$('#'+g[0]),h=cw*cv.height/cv.width,X=M+(i%2)*(cw+6);
     d.setTextColor(30);d.setFont('helvetica','bold');d.setFontSize(10);d.text(g[1],X,y);
@@ -589,19 +643,22 @@ function gerarPDF(){
    `- ${v.mais.length} pacotes à mais; maior incidência LOG: ${Lt[0]} (${Lt[1]}).`,
    `- ${v.falt.length} pacotes faltantes; maior incidência LOG: ${Ft[0]} (${Ft[1]}).`,
    `- ${v.avar.length} pacotes com avaria; maior incidência LOG: ${At[0]} (${At[1]}).`].forEach(s=>{d.text(s,M,y);y+=6});
-  // tabelas
   d.addPage();y=18;
-  y=tbl(d,y,'Pacotes retirados',['ID','Responsável','Motivo','Ciclo'],v.ret.map(x=>[x.id,x.resp,x.motivo,x.ciclo]),[38,40,76,28]);
-  y=tbl(d,y,'Pacotes à mais',['ID','Responsável LOG','Ciclo'],v.mais.map(x=>[x.id,x.resp,x.ciclo]),[38,106,38]);
-  y=tbl(d,y,'Pacotes faltantes',['ID','Responsável LOG','Transportadora','Ciclo'],v.falt.map(x=>[x.id,x.resp,x.transp,x.ciclo]),[38,60,56,28]);
-  y=tbl(d,y,'Pacotes com avaria',['ID','Responsável LOG','Transportadora','Ciclo'],v.avar.map(x=>[x.id,x.resp,x.transp,x.ciclo]),[38,60,56,28]);
+  }
+  // tabelas
+
+  if(ok('geral'))y=tbl(d,y,'Pacotes retirados',['ID','Responsável','Motivo','Ciclo'],v.ret.map(x=>[x.id,x.resp,x.motivo,x.ciclo]),[38,40,76,28]);
+  if(ok('geral'))y=tbl(d,y,'Pacotes à mais',['ID','Responsável LOG','Ciclo'],v.mais.map(x=>[x.id,x.resp,x.ciclo]),[38,106,38]);
+  if(ok('falt'))y=tbl(d,y,'Pacotes faltantes',['ID','Responsável LOG','Transportadora','Ciclo'],v.falt.map(x=>[x.id,x.resp,x.transp,x.ciclo]),[38,60,56,28]);
+  if(ok('avar'))y=tbl(d,y,'Pacotes com avaria',['ID','Responsável LOG','Transportadora','Ciclo'],v.avar.map(x=>[x.id,x.resp,x.transp,x.ciclo]),[38,60,56,28]);
   const fa=filtrosAtivos(),ft=n=>{const f=fa.find(z=>z[0]===n);return f?' ['+f[1]+']':''},cut=(t,n)=>{t=String(t==null?'':t);return t.length>n?t.slice(0,n-1)+'.':t},LIM=400;
-  if((DATA.aud||[]).length){
+  if(ok('fis')){const F=cruzar().fis;y=tbl(d,y,'Físico - '+F.length+' ID'+(F.length===1?'':'s'),['ID','Status bipado','Estado na planilha','Situação'],F.slice(0,LIM).map(x=>[x.id,x.st,cut(x.estado,18),cut(x.sit,24)]),[38,36,50,58])}
+  if((DATA.aud||[]).length&&ok('sist')){
     const S=sisFiltrado();
     y=tbl(d,y,'Sistêmica'+ft('Sistêmica')+' - '+S.length+' ID'+(S.length===1?'':'s'),['ID','Estado','Placa','Rota','Rep auditoria'],S.slice(0,LIM).map(x=>[x.id,x.estado,cut(x.placa,12),cut(x.rota,22),cut(x.rep,26)]),[34,22,28,48,50]);
     if(S.length>LIM){d.setFontSize(9);d.setTextColor(90);d.text('Mostrando '+LIM+' de '+S.length+'. A lista completa está no Excel.',M,y-6)}
   }
-  if(DESC.length){
+  if(DESC.length&&ok('desc')){
     const Q=visDesc();
     y=tbl(d,y,'Desconteinerizado'+ft('Desconteinerizado')+' - '+Q.length+' ID'+(Q.length===1?'':'s'),['ID do pacote','Estado','Problem solver','Dia','Motivo'],Q.slice(0,LIM).map(x=>[x.id,x.estado,cut(x.solver,26),x.dia,cut(x.motivo,26)]),[34,24,56,18,50]);
     if(Q.length>LIM){d.setFontSize(9);d.setTextColor(90);d.text('Mostrando '+LIM+' de '+Q.length+'. A lista completa está no Excel.',M,y-6)}
@@ -719,28 +776,30 @@ function excelRows(){
   const avar=BF().filter(x=>x.status==='Avaria').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x)]);
   return{ret,mais,falt,avar};
 }
-function exportarExcel(){
+function exportarExcel(sel){
+  sel=sel instanceof Set?sel:null;const ok=k=>!sel||sel.has(k);
   const{ret,mais,falt,avar}=excelRows();
   const folha=(h,rows,w)=>{const s=XLSX.utils.aoa_to_sheet([h,...rows]);s['!cols']=w.map(wch=>({wch}));return s};
   const wb=XLSX.utils.book_new();
   const fa=filtrosAtivos();
   if(fa.length)XLSX.utils.book_append_sheet(wb,folha(['Onde','Filtro aplicado'],fa,[48,70]),'Filtros aplicados');
   const au=DATA.aud||[],cz=cruzar(),nE=e=>au.filter(x=>x.estado===e).length;
-  if(au.length){
+  if(au.length&&(ok('sist')||ok('fis'))){
     const R=[['Resumo da comparação'],[],['Planilha de auditoria',AUDSRC],['Total de IDs na planilha',au.length],['   Corretos',nE('Correto')],['   À mais',nE('À mais')],['   Faltantes',nE('Faltante')],['IDs duplicados na planilha (contados uma vez)',DATA.audDup||0],[],['Repetidos: estão na planilha e foram bipados (aba Físico)',cz.fis.length],['   Confere (status bipado igual ao estado da planilha)',cz.fis.filter(x=>x.sit==='Confere').length],['   Revisar (status bipado diferente do estado)',cz.fis.filter(x=>x.sit==='Revisar').length],['Só na planilha, não bipados (aba Sistêmica)',cz.sis.length],[],['Como a comparação funciona'],['O número do ID de cada linha da planilha é procurado entre os IDs bipados (Retirado, À mais, Avaria, Faltante) e os retirados/à mais da planilha principal.'],['Se o ID aparece nos dois lugares, ele vai para a aba Físico. Se aparece só na planilha, fica na aba Sistêmica.'],['Situação Confere: status bipado igual ao estado da planilha. Situação Revisar: são diferentes; veja a coluna Resultado.']];
     const sr=XLSX.utils.aoa_to_sheet(R);sr['!cols']=[{wch:70},{wch:34}];XLSX.utils.book_append_sheet(wb,sr,'Resumo');
   }
-  XLSX.utils.book_append_sheet(wb,folha(XHR,ret,[16,30,24,22,10,20]),'Retirados');
-  XLSX.utils.book_append_sheet(wb,folha(XHM,mais,[16,30,22,10,20]),'À mais');
-  XLSX.utils.book_append_sheet(wb,folha(XHM,falt,[16,30,22,10,20]),'Faltantes');
-  XLSX.utils.book_append_sheet(wb,folha(XHM,avar,[16,30,22,10,20]),'Avarias');
+  if(ok('geral'))XLSX.utils.book_append_sheet(wb,folha(XHR,ret,[16,30,24,22,10,20]),'Retirados');
+  if(ok('geral'))XLSX.utils.book_append_sheet(wb,folha(XHM,mais,[16,30,22,10,20]),'À mais');
+  if(ok('falt'))XLSX.utils.book_append_sheet(wb,folha(XHM,falt,[16,30,22,10,20]),'Faltantes');
+  if(ok('avar'))XLSX.utils.book_append_sheet(wb,folha(XHM,avar,[16,30,22,10,20]),'Avarias');
   if(au.length){
-    XLSX.utils.book_append_sheet(wb,folha(['ID','Status bipado','Estado na planilha','Situação','Resultado','Placa','Rota','Rep auditoria','Responsável','Transportadora','Ciclo','Data auditoria'],cz.fis.map(x=>[x.id,x.st,x.estado,x.sit,x.res,x.placa,x.rota,x.rep,x.resp,x.transp,x.ciclo,x.data]),[14,14,18,11,62,12,24,34,24,20,8,20]),'Físico');
-    XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria'],sisFiltrado().map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data]),[14,10,56,12,24,34,20]),'Sistêmica');
+    if(ok('fis'))XLSX.utils.book_append_sheet(wb,folha(['ID','Status bipado','Estado na planilha','Situação','Resultado','Placa','Rota','Rep auditoria','Responsável','Transportadora','Ciclo','Data auditoria'],cz.fis.map(x=>[x.id,x.st,x.estado,x.sit,x.res,x.placa,x.rota,x.rep,x.resp,x.transp,x.ciclo,x.data]),[14,14,18,11,62,12,24,34,24,20,8,20]),'Físico');
+    if(ok('sist'))XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria'],sisFiltrado().map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data]),[14,10,56,12,24,34,20]),'Sistêmica');
   }
-  if(REAT.length)XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria','Movido em'],reatFiltrado().map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data,horaFmt({at:x.at})]),[14,10,56,12,24,34,20,20]),'Pacotes movimentados');
-  if(DESC.length)XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Criação','Motivo da exclusão'],visDesc().map(x=>[x.id,x.estado,x.solver,x.data,x.motivo]),[16,12,34,20,26]),'Desconteinerizado');
-  if(REATD.length)XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Motivo da exclusão','Criação','Movido em'],reatdFiltrado().map(x=>[x.id,x.estado,x.solver,x.motivo,x.data,horaFmt({at:x.at})]),[16,12,34,26,20,20]),'Reatribuição');
+  if(REAT.length&&ok('sist'))XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria','Movido em'],reatFiltrado().map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data,horaFmt({at:x.at})]),[14,10,56,12,24,34,20,20]),'Pacotes movimentados');
+  if(DESC.length&&ok('desc'))XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Criação','Motivo da exclusão'],visDesc().map(x=>[x.id,x.estado,x.solver,x.data,x.motivo]),[16,12,34,20,26]),'Desconteinerizado');
+  if(REATD.length&&ok('desc'))XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Motivo da exclusão','Criação','Movido em'],reatdFiltrado().map(x=>[x.id,x.estado,x.solver,x.motivo,x.data,horaFmt({at:x.at})]),[16,12,34,26,20,20]),'Reatribuição');
+  if(wb.SheetNames&&!wb.SheetNames.length){alert('Não há dados para exportar nas abas escolhidas.');return}
   XLSX.writeFile(wb,'relatorio-pcts-'+new Date().toISOString().slice(0,10)+'.xlsx');
 }
 $('#xls').onclick=exportarExcel;$('#bxl').onclick=exportarExcel;
@@ -1040,9 +1099,20 @@ function filtrosAtivos(){
 function abaTrocar(t){
   $('#pg').hidden=t!=='geral';$('#pf').hidden=t!=='falt';$('#pa').hidden=t!=='avar';$('#pfi').hidden=t!=='fis';$('#psi').hidden=t!=='sist';$('#pd').hidden=t!=='desc';
   document.querySelectorAll('.tb').forEach(b=>{const on=b.dataset.tab===t;b.classList.toggle('on',on);b.setAttribute('aria-selected',on)});
+  const an=$('#abanome');if(an)an.textContent=NOMEABA[t]||'';
   Object.values(charts).forEach(c=>{try{c.resize()}catch(e){}});
 }
 document.querySelectorAll('.tb').forEach(b=>b.onclick=()=>abaTrocar(b.dataset.tab));
+const NOMEABA={geral:'Visão geral',falt:'Faltantes',avar:'Avarias',fis:'Físico',sist:'Sistêmica',desc:'Desconteinerizado'};
+function gaveta(a){
+  $('#tabsnav').classList.toggle('open',a);$('#ov').hidden=!a;$('#hb').setAttribute('aria-expanded',a?'true':'false');
+  if(a){const on=$('#tabsnav .tb.on');if(on)on.focus()}else $('#hb').focus();
+}
+$('#hb').onclick=()=>gaveta(!$('#tabsnav').classList.contains('open'));
+$('#hbx').onclick=()=>gaveta(false);$('#ov').onclick=()=>gaveta(false);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&$('#tabsnav').classList.contains('open'))gaveta(false)});
+document.querySelectorAll('#tabsnav .tb').forEach(b=>b.addEventListener('click',()=>{$('#tabsnav').classList.remove('open');$('#ov').hidden=true;$('#hb').setAttribute('aria-expanded','false')}));
+
 
 /* ---------- menu ---------- */
 const abreMenu=a=>{$('#mnl').hidden=!a;$('#mnb').setAttribute('aria-expanded',a?'true':'false')};
@@ -1060,6 +1130,50 @@ $('#file').onchange=e=>{const f=e.target.files[0];if(f)f.arrayBuffer().then(b=>l
   descRender();
   try{const r=await fetch('dados.xlsx',{cache:'no-store'});if(r.ok)load(await r.arrayBuffer(),'dados.xlsx')}catch(e){}
 })();
+
+/* ---------- janela de escolha de abas ---------- */
+const ABAS=[['geral','Visão geral','Retirados e À mais'],['falt','Faltantes','Bipados como faltante'],['avar','Avarias','Bipados como avaria'],['fis','Físico','Bipados × planilha Sistêmica'],['sist','Sistêmica','Planilha de auditoria e movimentados'],['desc','Desconteinerizado','Problem solving e Reatribuição']];
+const CARGAS=[['auto','Detectar automaticamente','Recomendado: o Dashboard identifica o tipo pelo cabeçalho'],['main','Visão geral','Planilha de Retirados / À mais'],['sis','Sistêmica e Físico','Planilha de auditoria (coluna SHIPMENT)'],['desc','Desconteinerizado','Arquivo de problem solving (coluna ID do pacote)']];
+function contaAba(k){const v=view();return{geral:v.ret.length+v.mais.length,falt:v.falt.length,avar:v.avar.length,fis:CUR.fis.length,sist:CUR.sis.length,desc:DESC.length}[k]}
+let SMT='';
+function smAbrir(tipo){
+  SMT=tipo;const o=$('#smo');
+  if(tipo==='load'){
+    $('#smt').textContent='Carregar arquivo';$('#smd').textContent='Escolha para qual aba é o arquivo:';
+    o.innerHTML=CARGAS.map((c,i)=>`<label class="orow${i?'':' on'}"><input type="radio" name="sk" value="${c[0]}"${i?'':' checked'}><span><b>${c[1]}</b><small>${c[2]}</small></span><em></em></label>`).join('');
+    $('#smn').textContent='Faltantes e Avarias são preenchidos pelo botão Bipar IDs, não por arquivo.';$('#smok').textContent='Escolher arquivo…';
+  }else{
+    const x=tipo==='xls';
+    $('#smt').textContent=x?'Exportar relatório em Excel':'Baixar relatório PDF';$('#smd').textContent='Escolha as abas que entram no relatório (os filtros ativos continuam valendo):';
+    o.innerHTML=`<label class="orow all on"><input type="checkbox" id="small" checked><span><b>Todas as abas</b></span><em></em></label>`+ABAS.map(a=>`<label class="orow on"><input type="checkbox" name="sa" value="${a[0]}" checked><span><b>${a[1]}</b><small>${a[2]}</small></span><em>${contaAba(a[0])}</em></label>`).join('')+(x?'':`<label class="orow${BIP.length?' on':''}"><input type="checkbox" id="smxl"${BIP.length?' checked':''}><span><b>Gerar também o Excel</b><small>Baixa junto o Excel com as mesmas abas</small></span><em></em></label>`);
+    $('#smn').textContent='';$('#smok').textContent=x?'Exportar Excel':'Gerar PDF';
+  }
+  $('#sm').hidden=false;
+}
+const smFechar=()=>{$('#sm').hidden=true};
+$('#smo').addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='small')document.querySelectorAll('#smo input[name=sa]').forEach(c=>c.checked=t.checked);
+  else if(t.name==='sa'){const cs=[...document.querySelectorAll('#smo input[name=sa]')];$('#small').checked=cs.every(c=>c.checked)}
+  document.querySelectorAll('#smo .orow').forEach(r=>r.classList.toggle('on',r.querySelector('input').checked));
+});
+function exportaSel(tipo,sel){
+  const so=sel.size===1&&sel.has('desc');
+  if(tipo==='xls')so?exportarExcelDesc():exportarExcel(sel);else so?gerarPDFDesc():gerarPDF(sel);
+}
+$('#smok').onclick=()=>{
+  if(SMT==='load'){const k=(document.querySelector('#smo input[name=sk]:checked')||{}).value||'auto';$('#fsel').dataset.k=k;smFechar();$('#fsel').click();return}
+  const sel=new Set([...document.querySelectorAll('#smo input[name=sa]:checked')].map(c=>c.value));
+  if(!sel.size){$('#smn').textContent='Marque pelo menos uma aba.';return}
+  const tambem=SMT==='pdf'&&$('#smxl')&&$('#smxl').checked;
+  smFechar();exportaSel(SMT,sel);if(tambem)exportaSel('xls',sel);
+};
+$('#fsel').onchange=e=>{const f=e.target.files[0],k=e.target.dataset.k||'auto';if(f)f.arrayBuffer().then(b=>load(b,f.name,k));e.target.value=''};
+$('#smx').onclick=$('#smc').onclick=smFechar;
+$('#sm').addEventListener('click',e=>{if(e.target===$('#sm'))smFechar()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#sm').hidden)smFechar()});
+const acao=f=>()=>{gaveta(false);f()};
+$('#acl').onclick=acao(()=>smAbrir('load'));$('#ace').onclick=acao(()=>smAbrir('xls'));$('#acp').onclick=acao(()=>smAbrir('pdf'));$('#acx').onclick=acao(()=>limparTudo());
 </script>
 </body>
 </html>
