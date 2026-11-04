@@ -353,7 +353,7 @@ tr.sel td{background:#fff8d6!important}
    <label><span id="bl">MELI responsável</span><input type="text" id="br" list="brl" placeholder="Digite o nome" autocomplete="off"></label>
    <label>Ciclo<input type="text" id="bc" list="bcl" placeholder="PM, AM, SD" autocomplete="off"></label>
    <label>Transportadora<input type="text" id="bt" list="btl" placeholder="Nome da transportadora" autocomplete="off"></label>
-   <label id="bmw">Motivo<select id="bmot"><option>Não cabe no veículo</option><option>Área bloqueada</option><option>Fora de área</option><option>Autorizado a retirada</option></select></label>
+   <label id="bmw">Motivo<select id="bmot"><option>Não cabe no veículo</option><option>Área bloqueada</option><option>Fora de área</option><option>Autorizado a retirada</option><option>Inclusão manual</option></select></label>
   </div>
   <datalist id="brl"></datalist><datalist id="bcl"></datalist><datalist id="btl"></datalist>
   <div class="sc"><input type="text" id="bid" placeholder="Bipe ou cole o ID e aperte Enter" inputmode="numeric" autocomplete="off"><button class="btn p" id="ba">Adicionar</button></div>
@@ -673,7 +673,7 @@ function gerarPDF(sel){
 let BIP=[];
 try{BIP=JSON.parse(localStorage.getItem('pcts_bip')||'[]')}catch(e){BIP=[]}
 const saveBip=()=>{try{localStorage.setItem('pcts_bip',JSON.stringify(BIP))}catch(e){}};
-const canonMot=s=>{const k=semAc(s);return k==='nao cabe no veiculo'?'Não cabe no veículo':k==='area bloqueada'?'Área bloqueada':k==='fora de area'?'Fora de área':k==='autorizado a retirada'?'Autorizado a retirada':s};
+const canonMot=s=>{const k=semAc(s);return k==='nao cabe no veiculo'?'Não cabe no veículo':k==='area bloqueada'?'Área bloqueada':k==='fora de area'?'Fora de área':k==='autorizado a retirada'?'Autorizado a retirada':k==='inclusao manual'?'Inclusão manual':s};
 const baseAll=()=>[...DATA.ret,...DATA.mais,...(DATA.mov||[])];
 function refreshFc(){
   const cur=$('#fc').value;
