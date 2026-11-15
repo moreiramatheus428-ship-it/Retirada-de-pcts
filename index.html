@@ -131,6 +131,8 @@ tr.sel td{background:#fff8d6!important}
 .orow em{font-style:normal;font-weight:800;color:var(--pri);font-size:.9rem}
 .orow.all{background:#f4f5fa;font-weight:700}
 .smd{margin:0 0 6px;color:var(--mut);font-size:.88rem}
+body.semrota .tw table:has(#t7) :is(th,td):nth-child(n+5):nth-child(-n+8),body.semrota .tw table:has(#t8) :is(th,td):nth-child(n+6):nth-child(-n+8),body.semrota .tw table:has(#t9) :is(th,td):nth-child(n+4):nth-child(-n+7){display:none}
+body.semvalor .cv{display:none}
 </style>
 </head>
 <body>
@@ -188,6 +190,16 @@ tr.sel td{background:#fff8d6!important}
     <div class="card kpi"><span>Retirados − à mais</span><b id="k3">0</b><i>Diferença líquida</i></div>
     <div class="card kpi"><span>Maior responsável</span><b id="k4" style="font-size:1.4rem;margin-top:10px">-</b><i id="k4s"></i></div>
   </section>
+  <div id="kval" hidden>
+    <h2 style="margin:6px 0 12px;font-size:1.1rem;color:var(--pri)">Valor declarado dos pacotes bipados</h2>
+    <section class="kpis">
+      <div class="card kpi"><span>Valor total</span><b id="vg1">-</b><i id="vg1s"></i></div>
+      <div class="card kpi"><span>Retirados</span><b id="vg2">-</b><i id="vg2s"></i></div>
+      <div class="card kpi"><span>À mais</span><b id="vg3">-</b><i id="vg3s"></i></div>
+      <div class="card kpi"><span>Faltantes</span><b id="vg4">-</b><i id="vg4s"></i></div>
+      <div class="card kpi"><span>Avarias</span><b id="vg5">-</b><i id="vg5s"></i></div>
+    </section>
+  </div>
   <section class="grid">
     <div class="card"><h2>Retirados por responsável (MELI)</h2><div class="ch"><canvas id="c1"></canvas></div></div>
     <div class="card"><h2>Retirados por motivo</h2><div class="ch"><canvas id="c2"></canvas></div></div>
@@ -196,8 +208,8 @@ tr.sel td{background:#fff8d6!important}
   </section>
   <div class="card" style="margin-bottom:14px"><input type="search" id="q" placeholder="Buscar por ID ou responsável..." style="width:100%"></div>
   <section class="grid">
-    <div class="card"><h2>Detalhe - Retirados</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável</th><th>Motivo</th><th>Ciclo</th></tr></thead><tbody id="t1"></tbody></table></div></div>
-    <div class="card"><h2>Detalhe - À mais</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável LOG</th><th>Ciclo</th></tr></thead><tbody id="t2"></tbody></table></div></div>
+    <div class="card"><h2>Detalhe - Retirados</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável</th><th>Motivo</th><th>Ciclo</th><th class="cv">Valor declarado</th></tr></thead><tbody id="t1"></tbody></table></div></div>
+    <div class="card"><h2>Detalhe - À mais</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável LOG</th><th>Ciclo</th><th class="cv">Valor declarado</th></tr></thead><tbody id="t2"></tbody></table></div></div>
   </section>
   <h2 style="margin:22px 0 12px;font-size:1.1rem;color:var(--pri)">Transportadora</h2>
   <section class="kpis" id="ktr"></section>
@@ -224,7 +236,7 @@ tr.sel td{background:#fff8d6!important}
     <input type="search" id="qf" placeholder="Buscar por ID ou responsável LOG..." style="flex:1;min-width:200px">
     <button class="btn p" id="bfa2">+ Bipar faltantes</button>
   </div>
-  <div class="card"><h2>Detalhe - Faltantes</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável LOG</th><th>Transportadora</th><th>Ciclo</th><th>Bipado em</th><th></th></tr></thead><tbody id="t5"></tbody></table></div></div>
+  <div class="card"><h2>Detalhe - Faltantes</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável LOG</th><th>Transportadora</th><th>Ciclo</th><th>Bipado em</th><th class="cv">Valor declarado</th><th></th></tr></thead><tbody id="t5"></tbody></table></div></div>
  </div>
  <div class="pane" id="pa" hidden>
   <section class="kpis">
@@ -241,7 +253,7 @@ tr.sel td{background:#fff8d6!important}
     <input type="search" id="qa" placeholder="Buscar por ID ou responsável LOG..." style="flex:1;min-width:200px">
     <button class="btn p" id="bav2">+ Bipar avarias</button>
   </div>
-  <div class="card"><h2>Detalhe - Avarias</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável LOG</th><th>Transportadora</th><th>Ciclo</th><th>Bipado em</th><th></th></tr></thead><tbody id="t6"></tbody></table></div></div>
+  <div class="card"><h2>Detalhe - Avarias</h2><div class="tw"><table><thead><tr><th>ID</th><th>Responsável LOG</th><th>Transportadora</th><th>Ciclo</th><th>Bipado em</th><th class="cv">Valor declarado</th><th></th></tr></thead><tbody id="t6"></tbody></table></div></div>
  </div>
 <div class="pane" id="pfi" hidden>
   <p id="fmsg" style="font-size:.8rem;color:var(--mut);margin:0 0 12px"></p>
@@ -259,7 +271,7 @@ tr.sel td{background:#fff8d6!important}
   </section>
   <div class="card" style="margin-bottom:14px;font-size:.88rem;line-height:1.5"><b>Como ler:</b> o ID está na planilha e também foi bipado. <b style="color:#00864a">Confere</b> = o status bipado é igual ao estado da planilha (ex.: À mais nos dois). <b style="color:#b8860b">Revisar</b> = são diferentes (ex.: bipado como Retirado, mas a planilha diz Correto). A coluna Resultado explica cada caso.</div>
   <div class="card" style="margin-bottom:14px;display:flex;flex-wrap:wrap;gap:8px"><input type="search" id="qp" placeholder="Buscar por ID, placa, rota ou responsável..." style="flex:1;min-width:200px"><select id="sfp"><option value="">Todas as situações</option><option>Confere</option><option>Revisar</option></select></div>
-  <div class="card"><h2>Detalhe - Físico</h2><div class="tw"><table><thead><tr><th>ID</th><th>Status</th><th>Estado na planilha</th><th>Situação</th><th>Resultado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Responsável</th><th>Transportadora</th><th>Ciclo</th></tr></thead><tbody id="t8"></tbody></table></div></div>
+  <div class="card"><h2>Detalhe - Físico</h2><div class="tw"><table><thead><tr><th>ID</th><th>Status</th><th>Estado na planilha</th><th>Situação</th><th>Resultado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Responsável</th><th>Transportadora</th><th>Ciclo</th><th>Status do envio</th><th>Valor declarado</th></tr></thead><tbody id="t8"></tbody></table></div></div>
  </div>
  <div class="pane" id="psi" hidden>
   <p id="smsg"></p>
@@ -269,6 +281,10 @@ tr.sel td{background:#fff8d6!important}
     <div class="card kpi"><span>Só sistêmica</span><b id="y3">0</b><i>Ficam nesta aba</i></div>
     <div class="card kpi"><span>À mais</span><b id="y4">0</b><i>Na sistêmica</i></div>
     <div class="card kpi"><span>Faltantes</span><b id="y5">0</b><i>Na sistêmica</i></div>
+    <div class="card kpi vk"><span>Valor declarado total</span><b id="v1">-</b><i>Todos os IDs da planilha</i></div>
+    <div class="card kpi vk"><span>Valor conferido</span><b id="v2">-</b><i>Físico: Confere</i></div>
+    <div class="card kpi vk"><span>Valor a revisar</span><b id="v3">-</b><i>Físico: Revisar</i></div>
+    <div class="card kpi vk"><span>Valor não bipado</span><b id="v4">-</b><i>Só na planilha</i></div>
     <div class="card kpi"><span>Reatribuição</span><b id="y6">0</b><i>Pacotes movimentados</i></div>
   </section>
   <section class="grid">
@@ -289,12 +305,12 @@ tr.sel td{background:#fff8d6!important}
     <div class="card">
       <div class="ah"><h2>Detalhe - Sistêmica (<span id="sn">0</span>)</h2>
         <div class="ac"><span id="selc">0 selecionados</span><button class="btn p" id="mvb" disabled>Mover para Reatribuição →</button></div></div>
-      <div class="tw"><table><thead><tr><th><input type="checkbox" class="ck" id="sela" aria-label="Selecionar todos os IDs da lista"></th><th>ID</th><th>Estado</th><th>Resultado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Data auditoria</th></tr></thead><tbody id="t7"></tbody></table></div>
+      <div class="tw"><table><thead><tr><th><input type="checkbox" class="ck" id="sela" aria-label="Selecionar todos os IDs da lista"></th><th>ID</th><th>Estado</th><th>Resultado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Data auditoria</th><th>Status do envio</th><th>Valor declarado</th></tr></thead><tbody id="t7"></tbody></table></div>
     </div>
     <div class="card">
       <div class="ah"><h2>Pacotes movimentados - Reatribuição (<span id="rn">0</span>)</h2>
         <div class="ac"><span id="rselc">0 selecionados</span><button class="btn" id="rvb" disabled>← Devolver para Sistêmica</button></div></div>
-      <div class="tw"><table><thead><tr><th><input type="checkbox" class="ck" id="rsela" aria-label="Selecionar todos os IDs da Reatribuição"></th><th>ID</th><th>Estado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Data auditoria</th><th>Movido em</th></tr></thead><tbody id="t9"></tbody></table></div>
+      <div class="tw"><table><thead><tr><th><input type="checkbox" class="ck" id="rsela" aria-label="Selecionar todos os IDs da Reatribuição"></th><th>ID</th><th>Estado</th><th>Placa</th><th>Rota</th><th>Rep auditoria</th><th>Data auditoria</th><th>Movido em</th><th>Valor declarado</th></tr></thead><tbody id="t9"></tbody></table></div>
     </div>
   </section>
  </div>
@@ -353,7 +369,7 @@ tr.sel td{background:#fff8d6!important}
    <label><span id="bl">MELI responsável</span><input type="text" id="br" list="brl" placeholder="Digite o nome" autocomplete="off"></label>
    <label>Ciclo<input type="text" id="bc" list="bcl" placeholder="PM, AM, SD" autocomplete="off"></label>
    <label>Transportadora<input type="text" id="bt" list="btl" placeholder="Nome da transportadora" autocomplete="off"></label>
-   <label id="bmw">Motivo<select id="bmot"><option>Não cabe no veículo</option><option>Área bloqueada</option><option>Fora de área</option><option>Autorizado a retirada</option><option>Inclusão manual</option></select></label>
+   <label id="bmw">Motivo<select id="bmot"><option>Não cabe no veículo</option><option>Área bloqueada</option><option>Fora de área</option><option>Autorizado a retirada</option><option>Inclusão manual</option><option>PCTs sem atrelar</option></select></label>
   </div>
   <datalist id="brl"></datalist><datalist id="bcl"></datalist><datalist id="btl"></datalist>
   <div class="sc"><input type="text" id="bid" placeholder="Bipe ou cole o ID e aperte Enter" inputmode="numeric" autocomplete="off"><button class="btn p" id="ba">Adicionar</button></div>
@@ -422,7 +438,7 @@ function load(buf,name,kind){kind=kind||'auto';
     if(kind==='desc')throw new Error('não achei a coluna "ID do pacote". Esse arquivo não parece ser do Desconteinerizado.');
     const au=(kind==='auto'||kind==='sis')?parseAud(rd(wb.SheetNames[0])):null;
     if(au){DATA={...DATA,aud:au.rows,audDup:au.dup};AUDSRC=name;refreshFc();render();abaTrocar('sist');return}
-    if(kind==='sis')throw new Error('não achei a coluna SHIPMENT. Esse arquivo não parece ser a planilha Sistêmica.');
+    if(kind==='sis')throw new Error('não achei a coluna SHIPMENT ou ID do envio. Esse arquivo não parece ser a planilha Sistêmica.');
     const nm=wb.SheetNames.find(n=>/MOVIMENTA/.test(n.toUpperCase()));
     const mov=nm?parseMov(rd(nm)):[];
     let d;
@@ -465,20 +481,20 @@ function render(){
   mk('c3',hbar(L,PAL[2]));
   mk('c4',{type:'bar',data:{labels:cic,datasets:[{label:'Retirados',data:cic.map(c=>n(v.ret,c)),backgroundColor:PAL[0],borderRadius:4},{label:'À mais',data:cic.map(c=>n(v.mais,c)),backgroundColor:PAL[1],borderRadius:4}]},
     options:{plugins:{legend:{position:'bottom'}},layout:{padding:{top:18}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
-  tabelas();transportadora();faltantes();avarias();analise();
+  tabelas();transportadora();faltantes();avarias();analise();valorGeral();
 }
 function tabelas(){
-  const q=$('#q').value.toLowerCase(),v=view(),f=a=>a.filter(x=>(x.id+' '+x.resp).toLowerCase().includes(q));
-  $('#t1').innerHTML=f(v.ret).map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.motivo)}</td><td>${esc(x.ciclo)}</td></tr>`).join('')||'<tr><td colspan="4">Nenhum registro</td></tr>';
-  $('#t2').innerHTML=f(v.mais).map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.ciclo)}</td></tr>`).join('')||'<tr><td colspan="3">Nenhum registro</td></tr>';
+  const VM=valMap(),q=$('#q').value.toLowerCase(),v=view(),f=a=>a.filter(x=>(x.id+' '+x.resp).toLowerCase().includes(q));
+  $('#t1').innerHTML=f(v.ret).map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.motivo)}</td><td>${esc(x.ciclo)}</td><td class="cv">${brl(VM.get(String(x.id)))}</td></tr>`).join('')||'<tr><td colspan="5">Nenhum registro</td></tr>';
+  $('#t2').innerHTML=f(v.mais).map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.ciclo)}</td><td class="cv">${brl(VM.get(String(x.id)))}</td></tr>`).join('')||'<tr><td colspan="4">Nenhum registro</td></tr>';
 }
 
 /* ---------- faltantes ---------- */
 const horaFmt=x=>x.at?new Date(x.at).toLocaleString('pt-BR'):'';
 function tabelaFalt(){
-  const q=$('#qf').value.toLowerCase(),v=view();
+  const VM=valMap(),q=$('#qf').value.toLowerCase(),v=view();
   const a=v.falt.filter(x=>(x.id+' '+x.resp).toLowerCase().includes(q)).slice().reverse();
-  $('#t5').innerHTML=a.map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.transp)}</td><td>${esc(x.ciclo)}</td><td>${esc(horaFmt(x))}</td><td><button class="x" data-id="${x.id}" title="Remover" aria-label="Remover ${x.id}">×</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhum faltante bipado</td></tr>';
+  $('#t5').innerHTML=a.map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.transp)}</td><td>${esc(x.ciclo)}</td><td>${esc(horaFmt(x))}</td><td class="cv">${brl(VM.get(String(x.id)))}</td><td><button class="x" data-id="${x.id}" title="Remover" aria-label="Remover ${x.id}">×</button></td></tr>`).join('')||'<tr><td colspan="7">Nenhum faltante bipado</td></tr>';
 }
 function faltantes(){
   const v=view(),L=cnt(v.falt,'resp'),T=cnt(v.falt,'transp'),C=cnt(v.falt,'ciclo').sort((a,b)=>a[0].localeCompare(b[0]));
@@ -495,9 +511,9 @@ function faltantes(){
 
 /* ---------- avarias ---------- */
 function tabelaAvar(){
-  const q=$('#qa').value.toLowerCase(),v=view();
+  const VM=valMap(),q=$('#qa').value.toLowerCase(),v=view();
   const a=v.avar.filter(x=>(x.id+' '+x.resp).toLowerCase().includes(q)).slice().reverse();
-  $('#t6').innerHTML=a.map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.transp)}</td><td>${esc(x.ciclo)}</td><td>${esc(horaFmt(x))}</td><td><button class="x" data-id="${x.id}" title="Remover" aria-label="Remover ${x.id}">×</button></td></tr>`).join('')||'<tr><td colspan="6">Nenhuma avaria bipada</td></tr>';
+  $('#t6').innerHTML=a.map(x=>`<tr><td>${x.id}</td><td>${esc(x.resp)}</td><td>${esc(x.transp)}</td><td>${esc(x.ciclo)}</td><td>${esc(horaFmt(x))}</td><td class="cv">${brl(VM.get(String(x.id)))}</td><td><button class="x" data-id="${x.id}" title="Remover" aria-label="Remover ${x.id}">×</button></td></tr>`).join('')||'<tr><td colspan="7">Nenhuma avaria bipada</td></tr>';
 }
 function avarias(){
   const v=view(),L=cnt(v.avar,'resp'),T=cnt(v.avar,'transp'),C=cnt(v.avar,'ciclo').sort((a,b)=>a[0].localeCompare(b[0]));
@@ -514,17 +530,27 @@ function avarias(){
 
 /* ---------- planilha de auditoria: Físico x Sistêmica ---------- */
 const estNome=s=>{const k=semAc(s);return k==='correto'?'Correto':k==='faltante'?'Faltante':k==='a mais'?'À mais':(k?cap(String(s).trim()):'Sem estado')};
+function numBR(v){
+  if(typeof v==='number')return isFinite(v)?v:null;
+  let t=String(v==null?'':v).replace(/R\$|\s/g,'');if(!t)return null;
+  if(t.includes(',')&&t.includes('.'))t=t.replace(/\./g,'').replace(',','.');else if(t.includes(','))t=t.replace(',','.');
+  const n=parseFloat(t);return isFinite(n)?n:null;
+}
+const brl=v=>v==null?'-':'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const sm=a=>Math.round(a.reduce((t,x)=>t+(x.valor||0),0)*100)/100;
+function estSub(sub,status){const k=semAc(sub);if(/missing|faltante/.test(k))return'Faltante';if(/surplus|extra|excess|a mais/.test(k))return'À mais';return k?cap(String(sub).trim()):(status?cap(String(status).trim()):'Sem estado')}
 function parseAud(rows){
-  const hi=rows.findIndex(r=>r.some(c=>/SHIPMENT/.test(String(c).toUpperCase())));
+  const hi=rows.findIndex(r=>r.some(c=>{const u=String(c).trim().toUpperCase();return /SHIPMENT/.test(u)||u==='ID DO ENVIO'}));
   if(hi<0)return null;
   const h=rows[hi].map(c=>String(c).trim().toUpperCase()),f=re=>h.findIndex(v=>re.test(v));
-  const ci=f(/SHIPMENT/),pi=f(/PLACA/),di=f(/DATA/),ri=f(/ROTA/),ei=f(/ESTADO/),ai=f(/REP/);
-  if(ei<0)return null;
+  const ci=f(/SHIPMENT|^ID DO ENVIO$/),pi=f(/PLACA/),di=f(/DATA/),ri=f(/ROTA/),ei=f(/ESTADO/),ai=f(/REP/),vi=f(/VALOR/),sti=f(/^STATUS DO ENVIO/),sbi=f(/^SUB/);
+  if(ei<0&&sbi<0)return null;
+  const g=(r,i)=>i<0?'':String(r[i]??'').trim();
   const M=new Map();let dup=0;
   for(const r of rows.slice(hi+1)){
     const m=String(r[ci]??'').match(/\d{8,}/);if(!m)continue;
     if(M.has(m[0]))dup++;
-    M.set(m[0],{id:m[0],placa:String(r[pi]??'').trim()||'-',data:String(r[di]??'').trim(),rota:String(r[ri]??'').trim()||'-',estado:estNome(r[ei]),rep:nome(r[ai])});
+    M.set(m[0],{id:m[0],placa:g(r,pi)||'-',data:g(r,di),rota:g(r,ri)||'-',estado:ei>=0?estNome(r[ei]):estSub(g(r,sbi),g(r,sti)),rep:ai>=0?nome(r[ai]):'-',status:g(r,sti),sub:g(r,sbi),valor:vi>=0?numBR(r[vi]):null});
   }
   return{rows:[...M.values()],dup};
 }
@@ -543,7 +569,7 @@ let CUR={fis:[],sis:[]};
 function tabelaFis(){
   const q=$('#qp').value.toLowerCase();
   const sf=$('#sfp').value,a=CUR.fis.filter(x=>(!sf||x.sit===sf)&&(x.id+' '+x.placa+' '+x.rota+' '+x.rep+' '+x.resp).toLowerCase().includes(q));
-  $('#t8').innerHTML=a.map(x=>`<tr><td>${x.id}</td><td>${esc(x.st)}</td><td>${esc(x.estado)}</td><td><b style="color:${x.sit==='Confere'?'#00864a':'#b8860b'}">${x.sit}</b></td><td>${esc(x.res)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.resp)}</td><td>${esc(x.transp)}</td><td>${esc(x.ciclo)}</td></tr>`).join('')||'<tr><td colspan="11">Nenhum ID repetido</td></tr>';
+  $('#t8').innerHTML=a.map(x=>`<tr><td>${x.id}</td><td>${esc(x.st)}</td><td>${esc(x.estado)}</td><td><b style="color:${x.sit==='Confere'?'#00864a':'#b8860b'}">${x.sit}</b></td><td>${esc(x.res)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.resp)}</td><td>${esc(x.transp)}</td><td>${esc(x.ciclo)}</td><td>${esc(x.status?x.status+' / '+x.sub:'-')}</td><td>${brl(x.valor)}</td></tr>`).join('')||'<tr><td colspan="13">Nenhum ID repetido</td></tr>';
 }
 function visSis(){return sisFiltrado().slice(0,2000)}
 function sisFiltrado(){
@@ -553,13 +579,16 @@ function sisFiltrado(){
 function tabelaSist(){
   const a=visSis();
   $('#sn').textContent=a.length;
-  $('#t7').innerHTML=a.map(x=>`<tr data-id="${x.id}" class="${SELS.has(x.id)?'sel':''}"><td><input type="checkbox" class="ck" ${SELS.has(x.id)?'checked':''} aria-label="Selecionar ${x.id}"></td><td>${x.id}</td><td>${esc(x.estado)}</td><td>${esc(x.res)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.data)}</td></tr>`).join('')||'<tr><td colspan="8">Nenhum registro</td></tr>';
+  $('#t7').innerHTML=a.map(x=>`<tr data-id="${x.id}" class="${SELS.has(x.id)?'sel':''}"><td><input type="checkbox" class="ck" ${SELS.has(x.id)?'checked':''} aria-label="Selecionar ${x.id}"></td><td>${x.id}</td><td>${esc(x.estado)}</td><td>${esc(x.res)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.data)}</td><td>${esc(x.status?x.status+' / '+x.sub:'-')}</td><td>${brl(x.valor)}</td></tr>`).join('')||'<tr><td colspan="10">Nenhum registro</td></tr>';
   selUi();
 }
 function analise(){
   CUR=cruzar();const{fis,sis}=CUR,all=DATA.aud||[];
   const n=(a,e)=>a.filter(x=>x.estado===e).length,st=s=>fis.filter(x=>x.st===s).length;
   $('#tbnp').textContent=fis.length;$('#tbns').textContent=sis.length;
+  document.body.classList.toggle('semrota',all.length>0&&all.every(x=>x.placa==='-'&&x.rota==='-'&&x.rep==='-'));
+  {const hv=all.some(x=>x.valor!=null);document.querySelectorAll('.vk').forEach(e=>e.hidden=!hv);
+   if(hv){$('#v1').textContent=brl(sm(all));$('#v2').textContent=brl(sm(fis.filter(x=>x.sit==='Confere')));$('#v3').textContent=brl(sm(fis.filter(x=>x.sit==='Revisar')));$('#v4').textContent=brl(sm(sis))}}
   const msg=all.length?`Fonte: ${AUDSRC}. ${DATA.audDup?DATA.audDup+' ID(s) duplicado(s) na planilha contado(s) uma vez. ':''}IDs que também foram bipados (Retirado, À mais, Avaria ou Faltante) vão para Físico; os demais ficam em Sistêmica. O filtro de ciclo não vale para estas abas.`:'Nenhuma planilha de auditoria carregada. Use Menu > Carregar planilha e escolha o arquivo CSV.';
   $('#fmsg').textContent=msg;$('#smsg').textContent=msg;
   $('#p1').textContent=fis.length;$('#p2').textContent=st('Retirado');$('#p3').textContent=st('À mais');$('#p4').textContent=st('Avaria');$('#p5').textContent=st('Faltante');$('#p6').textContent=fis.filter(x=>x.sit==='Revisar').length;
@@ -611,7 +640,7 @@ function tbl(d,y,ttl,head,rows,w){
 }
 function gerarPDF(sel){
   sel=sel instanceof Set?sel:null;const ok=k=>!sel||sel.has(k);
-  const {jsPDF}=window.jspdf,d=new jsPDF({unit:'mm',format:'a4'}),W=210,M=14,v=view();
+  const {jsPDF}=window.jspdf,d=new jsPDF({unit:'mm',format:'a4'}),W=210,M=14,v=view();const VM=valMap(),hv=VM.size>0,vv=x=>hv?[brl(VM.get(String(x.id)))]:[];
   const R=cnt(v.ret,'resp'),Mo=cnt(v.ret,'motivo'),L=cnt(v.mais,'resp');
   // cabeçalho
   d.setFillColor(45,50,119);d.rect(0,0,W,30,'F');d.setFillColor(255,230,0);d.rect(0,30,W,1.6,'F');
@@ -642,20 +671,20 @@ function gerarPDF(sel){
    `- Principal motivo: ${Mt[0]} (${Mt[1]} ocorrências, ${p(Mt[1],v.ret.length)}%).`,
    `- ${v.mais.length} pacotes à mais; maior incidência LOG: ${Lt[0]} (${Lt[1]}).`,
    `- ${v.falt.length} pacotes faltantes; maior incidência LOG: ${Ft[0]} (${Ft[1]}).`,
-   `- ${v.avar.length} pacotes com avaria; maior incidência LOG: ${At[0]} (${At[1]}).`].forEach(s=>{d.text(s,M,y);y+=6});
+   `- ${v.avar.length} pacotes com avaria; maior incidência LOG: ${At[0]} (${At[1]}).`,...(hv?[(()=>{const a=valSoma(v.ret,VM),b=valSoma(v.mais,VM),c=valSoma(v.falt,VM),e=valSoma(v.avar,VM);return '- Valor declarado: retirados '+brl(a.t)+' | à mais '+brl(b.t)+' | faltantes '+brl(c.t)+' | avarias '+brl(e.t)+'.'})()]:[])].forEach(s=>{d.text(s,M,y);y+=6});
   d.addPage();y=18;
   }
   // tabelas
 
-  if(ok('geral'))y=tbl(d,y,'Pacotes retirados',['ID','Responsável','Motivo','Ciclo'],v.ret.map(x=>[x.id,x.resp,x.motivo,x.ciclo]),[38,40,76,28]);
-  if(ok('geral'))y=tbl(d,y,'Pacotes à mais',['ID','Responsável LOG','Ciclo'],v.mais.map(x=>[x.id,x.resp,x.ciclo]),[38,106,38]);
-  if(ok('falt'))y=tbl(d,y,'Pacotes faltantes',['ID','Responsável LOG','Transportadora','Ciclo'],v.falt.map(x=>[x.id,x.resp,x.transp,x.ciclo]),[38,60,56,28]);
-  if(ok('avar'))y=tbl(d,y,'Pacotes com avaria',['ID','Responsável LOG','Transportadora','Ciclo'],v.avar.map(x=>[x.id,x.resp,x.transp,x.ciclo]),[38,60,56,28]);
+  if(ok('geral'))y=tbl(d,y,'Pacotes retirados',['ID','Responsável','Motivo','Ciclo',...(hv?['Valor']:[])],v.ret.map(x=>[x.id,x.resp,x.motivo,x.ciclo,...vv(x)]),hv?[32,34,60,24,32]:[38,40,76,28]);
+  if(ok('geral'))y=tbl(d,y,'Pacotes à mais',['ID','Responsável LOG','Ciclo',...(hv?['Valor']:[])],v.mais.map(x=>[x.id,x.resp,x.ciclo,...vv(x)]),hv?[38,74,32,38]:[38,106,38]);
+  if(ok('falt'))y=tbl(d,y,'Pacotes faltantes',['ID','Responsável LOG','Transportadora','Ciclo',...(hv?['Valor']:[])],v.falt.map(x=>[x.id,x.resp,x.transp,x.ciclo,...vv(x)]),hv?[34,48,46,22,32]:[38,60,56,28]);
+  if(ok('avar'))y=tbl(d,y,'Pacotes com avaria',['ID','Responsável LOG','Transportadora','Ciclo',...(hv?['Valor']:[])],v.avar.map(x=>[x.id,x.resp,x.transp,x.ciclo,...vv(x)]),hv?[34,48,46,22,32]:[38,60,56,28]);
   const fa=filtrosAtivos(),ft=n=>{const f=fa.find(z=>z[0]===n);return f?' ['+f[1]+']':''},cut=(t,n)=>{t=String(t==null?'':t);return t.length>n?t.slice(0,n-1)+'.':t},LIM=400;
-  if(ok('fis')){const F=cruzar().fis;y=tbl(d,y,'Físico - '+F.length+' ID'+(F.length===1?'':'s'),['ID','Status bipado','Estado na planilha','Situação'],F.slice(0,LIM).map(x=>[x.id,x.st,cut(x.estado,18),cut(x.sit,24)]),[38,36,50,58])}
+  if(ok('fis')){const F=cruzar().fis;y=tbl(d,y,'Físico - '+F.length+' ID'+(F.length===1?'':'s')+(F.some(x=>x.valor!=null)?' - '+brl(sm(F)):''),['ID','Status bipado','Estado','Situação','Valor declarado'],F.slice(0,LIM).map(x=>[x.id,x.st,cut(x.estado,16),cut(x.sit,12),brl(x.valor)]),[38,34,34,28,48])}
   if((DATA.aud||[]).length&&ok('sist')){
     const S=sisFiltrado();
-    y=tbl(d,y,'Sistêmica'+ft('Sistêmica')+' - '+S.length+' ID'+(S.length===1?'':'s'),['ID','Estado','Placa','Rota','Rep auditoria'],S.slice(0,LIM).map(x=>[x.id,x.estado,cut(x.placa,12),cut(x.rota,22),cut(x.rep,26)]),[34,22,28,48,50]);
+    y=tbl(d,y,'Sistêmica'+ft('Sistêmica')+' - '+S.length+' ID'+(S.length===1?'':'s')+(S.some(x=>x.valor!=null)?' - '+brl(sm(S)):''),['ID','Estado',S.some(x=>x.status)?'Status do envio':'Placa','Rota','Valor declarado'],S.slice(0,LIM).map(x=>[x.id,x.estado,cut(x.status?x.status+' / '+x.sub:x.placa,22),cut(x.rota,18),brl(x.valor)]),[34,22,48,30,48]);
     if(S.length>LIM){d.setFontSize(9);d.setTextColor(90);d.text('Mostrando '+LIM+' de '+S.length+'. A lista completa está no Excel.',M,y-6)}
   }
   if(DESC.length&&ok('desc')){
@@ -673,7 +702,7 @@ function gerarPDF(sel){
 let BIP=[];
 try{BIP=JSON.parse(localStorage.getItem('pcts_bip')||'[]')}catch(e){BIP=[]}
 const saveBip=()=>{try{localStorage.setItem('pcts_bip',JSON.stringify(BIP))}catch(e){}};
-const canonMot=s=>{const k=semAc(s);return k==='nao cabe no veiculo'?'Não cabe no veículo':k==='area bloqueada'?'Área bloqueada':k==='fora de area'?'Fora de área':k==='autorizado a retirada'?'Autorizado a retirada':k==='inclusao manual'?'Inclusão manual':s};
+const canonMot=s=>{const k=semAc(s);return k==='nao cabe no veiculo'?'Não cabe no veículo':k==='area bloqueada'?'Área bloqueada':k==='fora de area'?'Fora de área':k==='autorizado a retirada'?'Autorizado a retirada':k==='inclusao manual'?'Inclusão manual':k==='pcts sem atrelar'||k==='pct sem atrelar'?'PCTs sem atrelar':s};
 const baseAll=()=>[...DATA.ret,...DATA.mais,...(DATA.mov||[])];
 function refreshFc(){
   const cur=$('#fc').value;
@@ -769,34 +798,34 @@ const XHM=['ID','LOG responsável','Transportadora','Ciclo','Bipado em'];
 const BF=()=>{const c=$('#fc').value;return c?BIP.filter(x=>x.ciclo===c):BIP};
 function excelRows(){
   const ord=(a,b)=>String(a.ciclo).localeCompare(String(b.ciclo))||String(a.at).localeCompare(String(b.at));
-  const hora=horaFmt;
-  const ret=BF().filter(x=>x.status==='Retirado').sort(ord).map(x=>[String(x.id),x.resp||'',x.motivo||'',x.transp||NI,x.ciclo||'',hora(x)]);
-  const mais=BF().filter(x=>x.status==='À mais').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x)]);
-  const falt=BF().filter(x=>x.status==='Faltante').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x)]);
-  const avar=BF().filter(x=>x.status==='Avaria').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x)]);
+  const hora=horaFmt,VM=valMap(),hv=VM.size>0;
+  const ret=BF().filter(x=>x.status==='Retirado').sort(ord).map(x=>[String(x.id),x.resp||'',x.motivo||'',x.transp||NI,x.ciclo||'',hora(x),...(hv?[VM.get(String(x.id))??'']:[])]);
+  const mais=BF().filter(x=>x.status==='À mais').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x),...(hv?[VM.get(String(x.id))??'']:[])]);
+  const falt=BF().filter(x=>x.status==='Faltante').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x),...(hv?[VM.get(String(x.id))??'']:[])]);
+  const avar=BF().filter(x=>x.status==='Avaria').sort(ord).map(x=>[String(x.id),x.resp||'',x.transp||NI,x.ciclo||'',hora(x),...(hv?[VM.get(String(x.id))??'']:[])]);
   return{ret,mais,falt,avar};
 }
 function exportarExcel(sel){
   sel=sel instanceof Set?sel:null;const ok=k=>!sel||sel.has(k);
-  const{ret,mais,falt,avar}=excelRows();
+  const{ret,mais,falt,avar}=excelRows(),hv=valMap().size>0;
   const folha=(h,rows,w)=>{const s=XLSX.utils.aoa_to_sheet([h,...rows]);s['!cols']=w.map(wch=>({wch}));return s};
   const wb=XLSX.utils.book_new();
   const fa=filtrosAtivos();
   if(fa.length)XLSX.utils.book_append_sheet(wb,folha(['Onde','Filtro aplicado'],fa,[48,70]),'Filtros aplicados');
   const au=DATA.aud||[],cz=cruzar(),nE=e=>au.filter(x=>x.estado===e).length;
   if(au.length&&(ok('sist')||ok('fis'))){
-    const R=[['Resumo da comparação'],[],['Planilha de auditoria',AUDSRC],['Total de IDs na planilha',au.length],['   Corretos',nE('Correto')],['   À mais',nE('À mais')],['   Faltantes',nE('Faltante')],['IDs duplicados na planilha (contados uma vez)',DATA.audDup||0],[],['Repetidos: estão na planilha e foram bipados (aba Físico)',cz.fis.length],['   Confere (status bipado igual ao estado da planilha)',cz.fis.filter(x=>x.sit==='Confere').length],['   Revisar (status bipado diferente do estado)',cz.fis.filter(x=>x.sit==='Revisar').length],['Só na planilha, não bipados (aba Sistêmica)',cz.sis.length],[],['Como a comparação funciona'],['O número do ID de cada linha da planilha é procurado entre os IDs bipados (Retirado, À mais, Avaria, Faltante) e os retirados/à mais da planilha principal.'],['Se o ID aparece nos dois lugares, ele vai para a aba Físico. Se aparece só na planilha, fica na aba Sistêmica.'],['Situação Confere: status bipado igual ao estado da planilha. Situação Revisar: são diferentes; veja a coluna Resultado.']];
+    const R=[['Resumo da comparação'],[],['Planilha de auditoria',AUDSRC],['Total de IDs na planilha',au.length],['   Corretos',nE('Correto')],['   À mais',nE('À mais')],['   Faltantes',nE('Faltante')],['IDs duplicados na planilha (contados uma vez)',DATA.audDup||0],[],['Repetidos: estão na planilha e foram bipados (aba Físico)',cz.fis.length],['   Confere (status bipado igual ao estado da planilha)',cz.fis.filter(x=>x.sit==='Confere').length],['   Revisar (status bipado diferente do estado)',cz.fis.filter(x=>x.sit==='Revisar').length],['Só na planilha, não bipados (aba Sistêmica)',cz.sis.length],...(au.some(x=>x.valor!=null)?[[],['Valor declarado total (R$)',sm(au)],['   Conferido (Físico: Confere)',sm(cz.fis.filter(x=>x.sit==='Confere'))],['   A revisar (Físico: Revisar)',sm(cz.fis.filter(x=>x.sit==='Revisar'))],['   Só na planilha, não bipados',sm(cz.sis)]]:[]),[],['Como a comparação funciona'],['O número do ID de cada linha da planilha é procurado entre os IDs bipados (Retirado, À mais, Avaria, Faltante) e os retirados/à mais da planilha principal.'],['Se o ID aparece nos dois lugares, ele vai para a aba Físico. Se aparece só na planilha, fica na aba Sistêmica.'],['Situação Confere: status bipado igual ao estado da planilha. Situação Revisar: são diferentes; veja a coluna Resultado.']];
     const sr=XLSX.utils.aoa_to_sheet(R);sr['!cols']=[{wch:70},{wch:34}];XLSX.utils.book_append_sheet(wb,sr,'Resumo');
   }
-  if(ok('geral'))XLSX.utils.book_append_sheet(wb,folha(XHR,ret,[16,30,24,22,10,20]),'Retirados');
-  if(ok('geral'))XLSX.utils.book_append_sheet(wb,folha(XHM,mais,[16,30,22,10,20]),'À mais');
-  if(ok('falt'))XLSX.utils.book_append_sheet(wb,folha(XHM,falt,[16,30,22,10,20]),'Faltantes');
-  if(ok('avar'))XLSX.utils.book_append_sheet(wb,folha(XHM,avar,[16,30,22,10,20]),'Avarias');
+  if(ok('geral'))XLSX.utils.book_append_sheet(wb,folha(hv?[...XHR,'Valor declarado']:XHR,ret,[16,30,24,22,10,20,16]),'Retirados');
+  if(ok('geral'))XLSX.utils.book_append_sheet(wb,folha(hv?[...XHM,'Valor declarado']:XHM,mais,[16,30,22,10,20,16]),'À mais');
+  if(ok('falt'))XLSX.utils.book_append_sheet(wb,folha(hv?[...XHM,'Valor declarado']:XHM,falt,[16,30,22,10,20,16]),'Faltantes');
+  if(ok('avar'))XLSX.utils.book_append_sheet(wb,folha(hv?[...XHM,'Valor declarado']:XHM,avar,[16,30,22,10,20,16]),'Avarias');
   if(au.length){
-    if(ok('fis'))XLSX.utils.book_append_sheet(wb,folha(['ID','Status bipado','Estado na planilha','Situação','Resultado','Placa','Rota','Rep auditoria','Responsável','Transportadora','Ciclo','Data auditoria'],cz.fis.map(x=>[x.id,x.st,x.estado,x.sit,x.res,x.placa,x.rota,x.rep,x.resp,x.transp,x.ciclo,x.data]),[14,14,18,11,62,12,24,34,24,20,8,20]),'Físico');
-    if(ok('sist'))XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria'],sisFiltrado().map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data]),[14,10,56,12,24,34,20]),'Sistêmica');
+    if(ok('fis'))XLSX.utils.book_append_sheet(wb,folha(['ID','Status bipado','Estado na planilha','Situação','Resultado','Placa','Rota','Rep auditoria','Responsável','Transportadora','Ciclo','Data auditoria','Status do envio','Valor declarado'],cz.fis.map(x=>[x.id,x.st,x.estado,x.sit,x.res,x.placa,x.rota,x.rep,x.resp,x.transp,x.ciclo,x.data,x.status?x.status+' / '+x.sub:'',x.valor==null?'':x.valor]),[14,14,18,11,62,12,24,34,24,20,8,20,22,16]),'Físico');
+    if(ok('sist'))XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria','Status do envio','Valor declarado'],sisFiltrado().map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data,x.status?x.status+' / '+x.sub:'',x.valor==null?'':x.valor]),[14,10,56,12,24,34,20,22,16]),'Sistêmica');
   }
-  if(REAT.length&&ok('sist'))XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria','Movido em'],reatFiltrado().map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data,horaFmt({at:x.at})]),[14,10,56,12,24,34,20,20]),'Pacotes movimentados');
+  if(REAT.length&&ok('sist'))XLSX.utils.book_append_sheet(wb,folha(['ID','Estado','Resultado','Placa','Rota','Rep auditoria','Data auditoria','Movido em','Status do envio','Valor declarado'],reatFiltrado().map(x=>[x.id,x.estado,x.res,x.placa,x.rota,x.rep,x.data,horaFmt({at:x.at}),x.status?x.status+' / '+x.sub:'',x.valor==null?'':x.valor]),[14,10,56,12,24,34,20,20,22,16]),'Pacotes movimentados');
   if(DESC.length&&ok('desc'))XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Criação','Motivo da exclusão'],visDesc().map(x=>[x.id,x.estado,x.solver,x.data,x.motivo]),[16,12,34,20,26]),'Desconteinerizado');
   if(REATD.length&&ok('desc'))XLSX.utils.book_append_sheet(wb,folha(['ID do pacote','Estado','Problem solver','Motivo da exclusão','Criação','Movido em'],reatdFiltrado().map(x=>[x.id,x.estado,x.solver,x.motivo,x.data,horaFmt({at:x.at})]),[16,12,34,26,20,20]),'Reatribuição');
   if(wb.SheetNames&&!wb.SheetNames.length){alert('Não há dados para exportar nas abas escolhidas.');return}
@@ -822,7 +851,7 @@ function selUi(){
 }
 function tabelaReat(){
   $('#rn').textContent=REAT.length;
-  $('#t9').innerHTML=REAT.slice().reverse().map(x=>`<tr data-id="${x.id}" class="${SELR.has(x.id)?'sel':''}"><td><input type="checkbox" class="ck" ${SELR.has(x.id)?'checked':''} aria-label="Selecionar ${x.id}"></td><td>${x.id}</td><td>${esc(x.estado)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.data)}</td><td>${esc(horaFmt({at:x.at}))}</td></tr>`).join('')||'<tr><td colspan="8">Nenhum ID movido. Selecione IDs na tabela ao lado e clique em Mover.</td></tr>';
+  $('#t9').innerHTML=REAT.slice().reverse().map(x=>`<tr data-id="${x.id}" class="${SELR.has(x.id)?'sel':''}"><td><input type="checkbox" class="ck" ${SELR.has(x.id)?'checked':''} aria-label="Selecionar ${x.id}"></td><td>${x.id}</td><td>${esc(x.estado)}</td><td>${esc(x.placa)}</td><td>${esc(x.rota)}</td><td>${esc(x.rep)}</td><td>${esc(x.data)}</td><td>${esc(horaFmt({at:x.at}))}</td><td>${brl(x.valor)}</td></tr>`).join('')||'<tr><td colspan="9">Nenhum ID movido. Selecione IDs na tabela ao lado e clique em Mover.</td></tr>';
   selUi();
 }
 function linhaClick(set,e){
@@ -837,7 +866,7 @@ $('#sela').onchange=e=>{visSis().forEach(x=>e.target.checked?SELS.add(x.id):SELS
 $('#rsela').onchange=e=>{REAT.forEach(x=>e.target.checked?SELR.add(x.id):SELR.delete(x.id));tabelaReat()};
 $('#mvb').onclick=()=>{
   const now=new Date().toISOString();let n=0;
-  CUR.sis.filter(x=>SELS.has(x.id)).forEach(x=>{if(!REAT.some(r=>r.id===x.id)){REAT.push({id:x.id,estado:x.estado,res:x.res,placa:x.placa,rota:x.rota,rep:x.rep,data:x.data,at:now});n++}});
+  CUR.sis.filter(x=>SELS.has(x.id)).forEach(x=>{if(!REAT.some(r=>r.id===x.id)){REAT.push({id:x.id,estado:x.estado,res:x.res,placa:x.placa,rota:x.rota,rep:x.rep,data:x.data,status:x.status,sub:x.sub,valor:x.valor,at:now});n++}});
   SELS.clear();saveReat();analise();
   rmsg(`${n} ID${n===1?'':'s'} movido${n===1?'':'s'} para Pacotes movimentados (Reatribuição).`,'ok');
 };
@@ -1095,6 +1124,17 @@ function filtrosAtivos(){
   if(DPER||DCIC||de||ate||ds||dm||dq)L.push(['Desconteinerizado',j([DPER&&'Últimos '+DPER+' dias',DCIC&&'Ciclo '+DCIC,de&&'De '+de,ate&&'Até '+ate,ds&&'Estado '+ds,dm&&'Motivo '+dm,dq&&'Busca "'+dq+'"'])]);
   return L;
 }
+
+function valMap(){const m=new Map();(DATA.aud||[]).forEach(x=>{if(x.valor!=null)m.set(x.id,x.valor)});return m}
+function valSoma(a,m){let t=0,sem=0;a.forEach(x=>{const v=m.get(String(x.id));if(v==null)sem++;else t+=v});return{t:Math.round(t*100)/100,sem}}
+function valorGeral(){
+  const m=valMap(),hv=m.size>0;document.body.classList.toggle('semvalor',!hv);$('#kval').hidden=!hv;
+  if(!hv)return;
+  const v=view(),L=[['vg2',v.ret],['vg3',v.mais],['vg4',v.falt],['vg5',v.avar]],S=L.map(([i,a])=>[i,a,valSoma(a,m)]);
+  const tot=Math.round(S.reduce((t,x)=>t+x[2].t,0)*100)/100,n=S.reduce((t,x)=>t+x[1].length,0),sem=S.reduce((t,x)=>t+x[2].sem,0);
+  $('#vg1').textContent=brl(tot);$('#vg1s').textContent=n?`${n-sem} de ${n} IDs com valor`:'Nenhum ID bipado';
+  S.forEach(([i,a,r])=>{$('#'+i).textContent=brl(r.t);$('#'+i+'s').textContent=a.length?`${a.length-r.sem} de ${a.length} IDs com valor`:'Nenhum ID'});
+}
 /* ---------- abas ---------- */
 function abaTrocar(t){
   $('#pg').hidden=t!=='geral';$('#pf').hidden=t!=='falt';$('#pa').hidden=t!=='avar';$('#pfi').hidden=t!=='fis';$('#psi').hidden=t!=='sist';$('#pd').hidden=t!=='desc';
@@ -1133,7 +1173,7 @@ $('#file').onchange=e=>{const f=e.target.files[0];if(f)f.arrayBuffer().then(b=>l
 
 /* ---------- janela de escolha de abas ---------- */
 const ABAS=[['geral','Visão geral','Retirados e À mais'],['falt','Faltantes','Bipados como faltante'],['avar','Avarias','Bipados como avaria'],['fis','Físico','Bipados × planilha Sistêmica'],['sist','Sistêmica','Planilha de auditoria e movimentados'],['desc','Desconteinerizado','Problem solving e Reatribuição']];
-const CARGAS=[['auto','Detectar automaticamente','Recomendado: o Dashboard identifica o tipo pelo cabeçalho'],['main','Visão geral','Planilha de Retirados / À mais'],['sis','Sistêmica e Físico','Planilha de auditoria (coluna SHIPMENT)'],['desc','Desconteinerizado','Arquivo de problem solving (coluna ID do pacote)']];
+const CARGAS=[['auto','Detectar automaticamente','Recomendado: o Dashboard identifica o tipo pelo cabeçalho'],['main','Visão geral','Planilha de Retirados / À mais'],['sis','Sistêmica e Físico','Planilha de auditoria (SHIPMENT) ou de valor declarado (ID do envio)'],['desc','Desconteinerizado','Arquivo de problem solving (coluna ID do pacote)']];
 function contaAba(k){const v=view();return{geral:v.ret.length+v.mais.length,falt:v.falt.length,avar:v.avar.length,fis:CUR.fis.length,sist:CUR.sis.length,desc:DESC.length}[k]}
 let SMT='';
 function smAbrir(tipo){
